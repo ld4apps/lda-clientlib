@@ -3,7 +3,7 @@ RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
 RDFS = 'http://www.w3.org/2000/01/rdf-schema#'
 OWL = 'http://www.w3.org/2002/07/owl#'
 XSD = 'http://www.w3.org/2001/XMLSchema#'
-BP = 'http://open-services.net/ns/basicProfile#'
+LDP = 'http://www.w3.org/ns/ldp#'
 DC = 'http://purl.org/dc/terms/'
 CE = 'http://ibm.com/ce/ns#'
 AC = 'http://ibm.com/ce/ac/ns#'
@@ -340,7 +340,7 @@ rdf_util = (function () {
     var standard_prefixes = {}
         standard_prefixes[RDFS] = 'rdfs'
         standard_prefixes[RDF] = 'rdf'
-        standard_prefixes[BP] = 'bp'
+        standard_prefixes[LDP] = 'ldp'
         standard_prefixes[XSD] = 'xsd'
         standard_prefixes[DC] = 'dc'
         standard_prefixes[CE] = 'ce'
@@ -493,25 +493,24 @@ rdf_util = (function () {
 
         var already_converted = {}
         var simple_jso = make_simple_jso(rdf_jso.default_subject, already_converted)
-        if (simple_jso['rdf_type'] && simple_jso['rdf_type'].toString() == BP+'Container') {
-            var membershipPredicate = rdf_jso.getValue(BP+'membershipPredicate').toString()
-            var membershipSubject = rdf_jso.getValue(BP+'membershipSubject')
-            if (membershipSubject) {
-                sjo_membershipSubject = simple_jso['bp_membershipSubject']
-                cpct_membershipPredicate = compact_predicate(membershipPredicate)
-                simple_jso['bp_members'] = 
+        if (simple_jso['rdf_type'] && simple_jso['rdf_type'].toString() == LDP+'DirectContainer') {
+            var membershipResource = rdf_jso.getValue(LDP+'membershipResource').toString()
+            var hasMemberRelation = rdf_jso.getValue(LDP+'hasMemberRelation')
+            if (hasMemberRelation) {
+                sjo_membershipSubject = simple_jso['ldp_membershipResource']
+                cpct_membershipPredicate = compact_predicate(hasMemberRelation.toString())
+                simple_jso['ldp_contains'] = 
                     !(sjo_membershipSubject instanceof URI) && cpct_membershipPredicate in sjo_membershipSubject ?
                         sjo_membershipSubject[cpct_membershipPredicate] : []
                 }
             else {
-                var membershipObject = rdf_jso.getValue(BP+'membershipObject')
-                var rdf_members = rdf_jso.getSubjects(membershipPredicate, membershipObject)
+                var rdf_members = rdf_jso.getSubjects(rdf_jso.getValue(LDP+'isMemberOfRelation').toString(), membershipResource)
                 var jso_members = []
                 for (var i=0; i<rdf_members.length; i++) {
                     var member = rdf_members[i]
                     jso_members.push(member in already_converted ? already_converted[member] : make_simple_jso(member, already_converted))
                     }
-                simple_jso['bp_members'] = jso_members
+                simple_jso['ldp_contains'] = jso_members
                 }
             }
         var ommitted_subjects = {}
@@ -553,7 +552,7 @@ rdf_util = (function () {
                 var rdf_jso_subject = {}
                 rdf_jso_graph[subject] = rdf_jso_subject
                 for (var key in simple_jso) {
-                    if (key.indexOf('_') === 0 || key == 'bp_members') {
+                    if (key.indexOf('_') === 0 || key == 'ldp_contains') {
                         continue
                         }
                     var predicate = expand_predicate(key)
@@ -1015,11 +1014,15 @@ ld_util = (function () {
             }
         var rdf_type = initial_simple_jso['rdf_type']
         var theme_url = null
-        if (rdf_type == BP+'NewMemberInstructions' && predicate_to_template_map) {
-            theme_url = predicate_to_template_map[initial_simple_jso.bp_newMemberContainer.bp_membershipPredicate.toString()]
+        if (rdf_type == CE+'NewMemberInstructions' && predicate_to_template_map) {
+            var container = initial_simple_jso.ce_newMemberContainer
+            var membershipPredicate = 'ldp_hasMemberRelation' in container ? container.ldp_hasMemberRelation : container.ldp_isMemberOfRelation
+            theme_url = predicate_to_template_map[membershipPredicate.toString()]
             }
-        else if (rdf_type == BP+'Container' && predicate_to_template_map) {
-            theme_url = predicate_to_template_map[initial_simple_jso.bp_membershipPredicate.toString()]
+        else if (rdf_type == LDP+'DirectContainer' && predicate_to_template_map) {
+            var container = initial_simple_jso
+            var membershipPredicate = 'ldp_hasMemberRelation' in container ? container.ldp_hasMemberRelation : container.ldp_isMemberOfRelation
+            theme_url = predicate_to_template_map[membershipPredicate.toString()]
             }
         else {
             if (typeof type_to_template_map === 'string') {
