@@ -2,7 +2,7 @@ import json
 import datetime, numbers
 from UserDict import UserDict
 from dateutil.parser import parse as to_datetime
-from baseconstants import XSD, LDP
+from base_constants import XSD, LDP
 
 _invalid_uri_chars = '<>" {}|\\^`'
 

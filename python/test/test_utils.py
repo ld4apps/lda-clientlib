@@ -46,9 +46,9 @@ def patch(url, body):
         return None
     print '######## PATCHed resource: %s, status: %d' % (url, r.status_code)
     
-def delete(url, body):
+def delete(url):
     r = requests.delete(url, headers=DELETE_HEADERS)
     if r.status_code != 200 and r.status_code != 204:
         print '######## FAILED TO DELETE url: %s status: %s text: %s' %(url, r.status_code, r.text)
         return None
-    print '######## DELETEed resource: %s, status: %d body: %s' % (url, r.status_code, r.text)
+    print '######## DELETEed resource: %s, status: %d text: %s' % (url, r.status_code, r.text)
