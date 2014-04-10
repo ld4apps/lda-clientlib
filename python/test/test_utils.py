@@ -1,10 +1,7 @@
 import requests, json, jwt
-from rdf_json import URI, BNode, RDF_JSON_Encoder, RDF_JSON_Document, rdf_json_decoder
+from rdf_json import RDF_JSON_Encoder, RDF_JSON_Document, rdf_json_decoder
+from base_constants import ADMIN_USER
 
-RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-RDFS = 'http://www.w3.org/2000/01/rdf-schema#'
-CE = 'http://ibm.com/ce/ns#'
-ADMIN_USER = 'http://ibm.com/ce/user/admin'
 SHARED_SECRET = 'our little secret'
 
 encoded_signature = jwt.encode({'user': ADMIN_USER}, SHARED_SECRET, 'HS256')
@@ -13,6 +10,11 @@ POST_HEADERS = {
     'Content-type': 'application/rdf+json+ce', 
     'Cookie': 'SSSESSIONID=%s' % encoded_signature, 
     'ce-post-reason': 'ce-create' 
+    }
+
+PATCH_HEADERS = {
+    'Content-type': 'application/json', 
+    'Cookie': 'SSSESSIONID=%s' % encoded_signature, 
     }
 
 GET_HEADERS = {
