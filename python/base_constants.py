@@ -1,3 +1,5 @@
+import os, importlib
+
 RDFS = 'http://www.w3.org/2000/01/rdf-schema#'
 RDF = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
 LDP = 'http://www.w3.org/ns/ldp#'
@@ -20,3 +22,18 @@ AC_ALL = AC_T|AC_R|AC_C|AC_D|AC_W|AC_X
 
 ADMIN_USER = 'http://ibm.com/ce/user/admin'
 ANY_USER = 'http://ibm.com/ce/user/any'
+
+# create and instance of a class from a module-qualified name (e.g., "my_module.MyClass")
+def create_instance(qualified_class_name):
+    parts = qualified_class_name.split('.')
+    module_name = parts[0]
+    class_name = parts[1]
+    module = importlib.import_module(module_name)
+    class_ = getattr(module, class_name)
+    return class_()    
+
+if 'URL_POLICY_CLASS' in os.environ:
+    URL_POLICY = create_instance(os.environ['URL_POLICY_CLASS'])
+else:
+    #URL_POLICY = create_instance('url_policy.PathRootTenantURLPolicy')
+    URL_POLICY = create_instance('url_policy.HostnameTenantURLPolicy')
