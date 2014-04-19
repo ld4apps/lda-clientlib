@@ -304,11 +304,13 @@ class RDF_json_to_compact_json_converter():
         elif isinstance(value_struct, URI):
             url_string = str(value_struct)
             if url_string in document and url_string not in stack:
-                return self.compact_json_object(str(value_struct), document, stack)
+                return self.compact_json_object(url_string, document, stack)
             else:
-                return value_struct
+                return url_string
         elif hasattr(value_struct, 'bnoode_string') and value_struct.bnode_string in document and value_struct.bnode_string not in stack:
             return self.compact_json_object(value_struct.bnode_string, document, stack)
+        elif isinstance(value_struct, datetime.datetime):
+            return value_struct.isoformat()
         else:
             return value_struct
             
