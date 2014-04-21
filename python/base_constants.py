@@ -23,9 +23,9 @@ AC_ALL = AC_T|AC_R|AC_C|AC_D|AC_W|AC_X
 ADMIN_USER = 'http://ibm.com/ce/user/admin'
 ANY_USER = 'http://ibm.com/ce/user/any'
 
-# create and instance of a class from a module-qualified name (e.g., "my_module.MyClass")
-def create_instance(qualified_class_name):
-    parts = qualified_class_name.split('.')
+# create and instance of a class from a #-separated module and class name (e.g., "some_module#SomeClass")
+def create_instance(module_and_class_name):
+    parts = module_and_class_name.split('#')
     module_name = parts[0]
     class_name = parts[1]
     module = importlib.import_module(module_name)
@@ -35,5 +35,5 @@ def create_instance(qualified_class_name):
 if 'URL_POLICY_CLASS' in os.environ:
     URL_POLICY = create_instance(os.environ['URL_POLICY_CLASS'])
 else:
-    #URL_POLICY = create_instance('url_policy.PathRootTenantURLPolicy')
-    URL_POLICY = create_instance('url_policy.HostnameTenantURLPolicy')
+    #URL_POLICY = create_instance('url_policy#PathRootTenantURLPolicy')
+    URL_POLICY = create_instance('url_policy#HostnameTenantURLPolicy')
