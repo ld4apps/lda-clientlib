@@ -55,10 +55,24 @@ class RDF_JSON_Document(UserDict):
     # The data is kept in its RDF-JSON format as it will be exchanged with the server.
     # The purpose of the class is to wrap the RDF-JSON to provide accessor methods to make it easy to work with the RDF-JSON.
     
-    def __init__(self, aDict, graph_url=None, default_subject_url=None):
-        self.graph_url = graph_url
-        self.default_subject_url = default_subject_url
-        self.data = aDict            
+    def __init__(self, aSource, graph_url=None, default_subject_url=None):
+        if hasattr(aSource, 'status_code'):
+            if aSource.status_code == 201 or aSource.status_code == 200:
+                try:
+                    self.data = json.loads(aSource.text, object_hook=rdf_json_decoder)
+                except ValueError:
+                    return None
+            if aSource.status_code == 201 :
+                self.graph_url = aSource.headers['Location']
+            elif aSource.status_code == 200:
+                self.graph_url = aSource.headers['Content-Location']
+            else: 
+                return None
+            self.default_subject_url = default_subject_url
+        else:
+            self.graph_url = graph_url
+            self.default_subject_url = default_subject_url
+            self.data = aSource           
     
     def graph_subject_node(self):
         if self.graph_url in self.data:
