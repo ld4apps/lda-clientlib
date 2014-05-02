@@ -86,17 +86,7 @@ class RDF_JSON_Document(UserDict):
         else:
             return self.graph_url
 
-    def getProperty(self, attribute, subject=None):
-        if not subject:
-            subject = self.default_subject()
-        subject_url_string = str(subject)
-        attribute = str(attribute)
-        try:
-            return self.data[subject_url_string][attribute][0]
-        except (KeyError, IndexError):
-            return None
-        
-    def getProperties(self, attribute, subject=None):
+    def get_property(self, attribute, subject=None):
         if not subject:
             subject = self.default_subject()
         subject_url_string = str(subject)
@@ -107,6 +97,20 @@ class RDF_JSON_Document(UserDict):
             return None
 
     def getValue(self, attribute, default=None, subject=None):
+        if not subject:
+            subject = self.default_subject()
+        subject_url_string = str(subject)
+        attribute = str(attribute)
+        try:
+            rdf_value = self.data[subject_url_string][attribute]
+        except (KeyError, IndexError):
+            return default
+        if isinstance(rdf_value, (list, tuple)):
+            return rdf_value[0] if len(rdf_value) > 0 else default
+        else:
+            return rdf_value
+
+    def get_value(self, attribute, subject=None, default=None, ):
         if not subject:
             subject = self.default_subject()
         subject_url_string = str(subject)
@@ -160,7 +164,18 @@ class RDF_JSON_Document(UserDict):
             self.data[subject_url_string][attribute] = value
         else:
             self.data[subject_url_string] = {attribute: value}
-        
+
+    def set_value(self, attribute, value, subject=None):
+        if not subject:
+            subject_url_string = self.default_subject()
+        else:
+            subject_url_string = str(subject)
+        attribute = str(attribute)
+        if subject_url_string in self.data:
+            self.data[subject_url_string][attribute] = value
+        else:
+            self.data[subject_url_string] = {attribute: value}
+            
     def getValues(self, attribute, default=[], subject=None):
         if not subject:
             subject_url_string = self.default_subject()
@@ -178,7 +193,25 @@ class RDF_JSON_Document(UserDict):
                 return default
         else:
             return [result]
-        
+
+    def get_values(self, attribute, subject=None, default=[]):
+        if not subject:
+            subject_url_string = self.default_subject()
+        else:
+            subject_url_string = str(subject)
+        attribute = str(attribute)
+        try:
+            result = self.data[subject_url_string][attribute]    
+        except (KeyError, IndexError):
+            return default
+        if isinstance(result, (list, tuple)):
+            if len(result) > 0:
+                return result
+            else:
+                return default
+        else:
+            return [result]
+            
     def add_triples(self, subject, predicates, value_array=None):
         subject_url_string = str(subject)
         if subject_url_string in self.data:
