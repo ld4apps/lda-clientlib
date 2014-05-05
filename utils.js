@@ -871,13 +871,13 @@ ld_util = (function () {
         return request
         }
     function send_patch(resource_url, modification_count, patch_struct, handle_result, headers) {
-        resource_url = resource_url.toString()
+        original_resource_url = resource_url = resource_url.toString()
         if (resource_url.indexOf('http:') === 0) {resource_url = resource_url.slice(5)} // don't force http if the browser is doing https
         else if (resource_url.indexOf('https:') === 0) {resource_url = resource_url.slice(6)} // don't force https if the browser is doing http
         var patch = [modification_count, patch_struct]
         var json_str = JSON.stringify(patch)
         var request=new XMLHttpRequest()
-        request.resource_url = resource_url // we will need this later to construct the rdf_util from the response
+        request.resource_url = original_resource_url // we will need this later to construct the rdf_util from the response
         if (!!handle_result) {
             request.onreadystatechange=function() {
                 if (request.readyState==4) {
