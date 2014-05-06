@@ -67,7 +67,7 @@ class RDF_JSON_Document(UserDict):
             elif aSource.status_code == 200:
                 self.graph_url = aSource.headers['Content-Location']
             else: 
-                return None
+                self.graph_url = None
             self.default_subject_url = default_subject_url
         else:
             self.graph_url = graph_url

@@ -32,9 +32,6 @@ class HostnameTenantURLPolicy():
             return result
      
     def get_url_components(self, environ): 
-        path = environ['PATH_INFO']
-        path_parts = path.split('/')
-        namespace = document_id = extra_path_segments = None
         request_host = get_request_host(environ).lower()
         request_host = request_host if len(request_host.split(':')) > 1 else request_host+':80'
         if HOSTINGSITE_HOST is None or request_host == HOSTINGSITE_HOST: 
@@ -46,13 +43,20 @@ class HostnameTenantURLPolicy():
             else:
                 #TODO: look up a table to see if it's a 'custom domain' for a known tenant
                 tenant = None
+        path = environ['PATH_INFO']
+        path_parts, namespace, document_id, extra_path_segments = self.path_parse(path)
+        return (tenant, namespace, document_id, extra_path_segments, path, path_parts, get_request_host(environ), environ['QUERY_STRING'])
+
+    def path_parse(self, path):
+        path_parts = path.split('/')
+        namespace = document_id = extra_path_segments = None
         if len(path_parts) > 1 and path_parts[-1] != '': #trailing /
             namespace = path_parts[1]
             if len(path_parts) > 2:
                 document_id = path_parts[2]
                 if len(path_parts) > 3:
-                    extra_path_segments = path_parts[3:]
-        return (tenant, namespace, document_id, extra_path_segments, path, path_parts, get_request_host(environ), environ['QUERY_STRING'])
+                    extra_path_segments = path_parts[3:]  
+        return path_parts, namespace, document_id, extra_path_segments
     
 if __name__ == '__main__':
     # run a few tests
