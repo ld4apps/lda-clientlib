@@ -20,7 +20,7 @@ class URI():
         return isinstance(other, URI) and self.uri_string == other.uri_string
 
     def __ne__(self, other):
-        return not self.eq(other)
+        return not self.__eq__(other)
         
     def __hash__(self):
         return self.uri_string.__hash__()
@@ -39,7 +39,7 @@ class BNode():
         return isinstance(other, BNode) and self.bnode_string == other.bnode_string
 
     def __ne__(self, other):
-        return not self.eq(other)
+        return not self.__eq__(other)
         
     def __hash__(self):
         return self.bnode_string.__hash__()
