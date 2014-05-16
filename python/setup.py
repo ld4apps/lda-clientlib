@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(name='ldo-clientlib',
+setup(name='lda-clientlib',
       version='1.0',
       description='LDA Client Library',
       author='Your Name',
