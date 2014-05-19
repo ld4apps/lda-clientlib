@@ -360,15 +360,66 @@ rdf_util = (function () {
         }
 
     Rdf_converter.prototype.get_rdf_jso_from_rdfa =  function() {
-        function add_predicate_value(decl, predicate, object, one_of_many) {
+        function add_predicate_value(decl, predicate, object) {
             if (predicate in decl) {
                 decl[predicate].push(object)
                     }
             else {
-                decl[predicate] = one_of_many ? [object] : object
+                decl[predicate] = object
                 }
             }
 
+        function get_value_from_element(predicate_element) {
+            var value = null
+            var rdf_json_value = null
+            var one_of_many = predicate_element.hasAttribute('one-of-many')
+            if (predicate_element.nodeName=='SPAN') {
+                var value_type = null
+                var data_type = null
+                if (predicate_element.hasAttribute('datatype')) {
+                    data_type = predicate_element.getAttribute('datatype')}
+                else {
+                    data_type = 'http://www.w3.org/2001/XMLSchema#string'}
+                if (data_type == 'http://www.w3.org/2001/XMLSchema#integer') {rdf_json_value = parseInt(predicate_element.textContent, 10)}
+                else if (data_type == 'http://www.w3.org/2001/XMLSchema#double') {rdf_json_value = parseFloat(predicate_element.textContent)}
+                else if (data_type == 'http://www.w3.org/2001/XMLSchema#boolean') {rdf_json_value = predicate_element.textContent === 'true'}
+                else if (data_type == 'http://www.w3.org/2001/XMLSchema#dateTime') {rdf_json_value = new RDF_Date(predicate_element.textContent)}
+                else if (data_type == 'http://www.w3.org/2001/XMLSchema#string') {rdf_json_value = predicate_element.textContent}
+                else if (data_type == 'graph') {
+                    var sub_elements2 = graph_div.children
+                    for (var k=0; k<sub_elements2.length; k++) { // iterate per subject
+                        var subgraph_div2 = sub_elements2[k]
+                        if (subgraph_div2.nodeName=='DIV' && graph_element.hasAttribute('graph')) {
+                            value = get_rdf_jso_from_div(subgraph_div2)
+                            rdf_json_value = {'value': value, 'type':'graph'}
+                            break
+                            }
+                        }
+                    }
+                else if (data_type = RDF+'List') {
+                    var value_elements = predicate_element.children
+                    rdf_json_value = []
+                    for (var l=0; l<value_elements.length; l++) { // iterate over values
+                        var element_value = get_value_from_element(value_elements[l])
+                        if (element_value != null) {
+                            rdf_json_value.push(element_value)
+                            }
+                        }
+                    
+                    }
+                else {rdf_json_value = {'value': predicate_element.textContent, 'datatype': data_type, 'type':'literal'}}
+                return rdf_json_value
+                }
+            else if (predicate_element.nodeName=='A') {
+                var href = predicate_element.getAttribute('href')
+                rdf_json_value = href.indexOf('_') === 0 ? new BNode(href) : new URI(href)
+                return rdf_json_value
+                }
+            else { // not a span or anchor
+                return null
+                }
+            }
+                    
         function get_rdf_jso_from_div(graph_div) {
             var result = new Rdf_Jso(graph_div.getAttribute('graph')) // caller may need to adjust to add back hash from url
             var sub_elements = graph_div.children
@@ -381,40 +432,10 @@ rdf_util = (function () {
                     for (var j=0; j<triple_elements.length; j++) { // iterate per triple
                         var predicate_element = triple_elements[j]
                         if (predicate_element.hasAttribute('property')) {
-                            var value = null
-                            var rdf_json_value = null
                             var predicate = predicate_element.getAttribute('property')
-                            var one_of_many = predicate_element.hasAttribute('one-of-many')
-                            if (predicate_element.nodeName=='SPAN') {
-                                var value_type = null
-                                var data_type = null
-                                if (predicate_element.hasAttribute('datatype')) {
-                                    data_type = predicate_element.getAttribute('datatype')}
-                                else {
-                                    data_type = 'http://www.w3.org/2001/XMLSchema#string'}
-                                if (data_type == 'http://www.w3.org/2001/XMLSchema#integer') {rdf_json_value = parseInt(predicate_element.textContent, 10)}
-                                else if (data_type == 'http://www.w3.org/2001/XMLSchema#double') {rdf_json_value = parseFloat(predicate_element.textContent)}
-                                else if (data_type == 'http://www.w3.org/2001/XMLSchema#boolean') {rdf_json_value = predicate_element.textContent === 'true'}
-                                else if (data_type == 'http://www.w3.org/2001/XMLSchema#dateTime') {rdf_json_value = new RDF_Date(predicate_element.textContent)}
-                                else if (data_type == 'http://www.w3.org/2001/XMLSchema#string') {rdf_json_value = predicate_element.textContent}
-                                else if (data_type == 'graph') {
-                                    var sub_elements2 = graph_div.children
-                                    for (var k=0; i<sub_elements2.length; k++) { // iterate per subject
-                                        var subgraph_div2 = sub_elements2[k]
-                                        if (subgraph_div2.nodeName=='DIV' && graph_element.hasAttribute('graph')) {
-                                            value = get_rdf_jso_from_div(subgraph_div2)
-                                            rdf_json_value = {'value': value, 'type':'graph'}
-                                            break
-                                            }
-                                        }
-                                    }
-                                else {rdf_json_value = {'value': predicate_element.textContent, 'datatype': data_type, 'type':'literal'}}
-                                add_predicate_value(sub_graph, predicate, rdf_json_value, one_of_many)
-                                }
-                            else if (predicate_element.nodeName=='A') {
-                                var href = predicate_element.getAttribute('href')
-                                rdf_json_value = href.indexOf('_') === 0 ? new BNode(href) : new URI(href)
-                                add_predicate_value(sub_graph, predicate, rdf_json_value, one_of_many)
+                            var value = get_value_from_element(predicate_element)
+                            if (value != null) {
+                                add_predicate_value(sub_graph, predicate, value)
                                 }
                             }
                         }
@@ -1006,6 +1027,7 @@ ld_util = (function () {
     function onload(prefixes, type_to_template_map, predicate_to_template_map) {
         var rdf_converter =  new rdf_util.Rdf_converter(prefixes)
         var initial_rdf_jso = rdf_converter.get_rdf_jso_from_rdfa()
+        console.log(initial_rdf_jso) 
         var initial_simple_jso = rdf_converter.convert_to_simple_jso(initial_rdf_jso)
         APPLICATION_ENVIRON = {
             initial_rdf_jso:initial_rdf_jso,

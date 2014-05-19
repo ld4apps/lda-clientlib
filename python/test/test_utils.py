@@ -48,7 +48,7 @@ def post(url, body):
         return RDF_JSON_Document(json.loads(r.text, object_hook=rdf_json_decoder), r.headers['location'])
     else:
         print '######## POSTed %s: to: %s status: %d' % (resource_type, url, r.status_code)
-        return r.text if r.status_code == 200 else {}
+        return None if r.status_code == 200 else {}
     
 def patch(url, body):
     r = requests.patch(url, headers=PATCH_HEADERS, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)

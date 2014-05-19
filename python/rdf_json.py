@@ -166,10 +166,10 @@ class RDF_JSON_Document(UserDict):
             self.data[subject_url_string] = {attribute: value}
 
     def set_value(self, attribute, value, subject=None):
-        if not subject:
-            subject_url_string = self.default_subject()
-        else:
+        if subject:
             subject_url_string = str(subject)
+        else:
+            subject_url_string = self.default_subject()
         attribute = str(attribute)
         if subject_url_string in self.data:
             self.data[subject_url_string][attribute] = value
