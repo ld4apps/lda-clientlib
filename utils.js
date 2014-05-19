@@ -1027,7 +1027,6 @@ ld_util = (function () {
     function onload(prefixes, type_to_template_map, predicate_to_template_map) {
         var rdf_converter =  new rdf_util.Rdf_converter(prefixes)
         var initial_rdf_jso = rdf_converter.get_rdf_jso_from_rdfa()
-        console.log(initial_rdf_jso) 
         var initial_simple_jso = rdf_converter.convert_to_simple_jso(initial_rdf_jso)
         APPLICATION_ENVIRON = {
             initial_rdf_jso:initial_rdf_jso,
