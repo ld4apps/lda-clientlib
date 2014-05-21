@@ -1,4 +1,4 @@
-import os
+import os, urlparse
 
 if 'HOSTINGSITE_HOST' in os.environ:
     HOSTINGSITE_HOST = os.environ['HOSTINGSITE_HOST'].lower() # hostname and port (if there is one)
@@ -44,10 +44,10 @@ class HostnameTenantURLPolicy():
                 #TODO: look up a table to see if it's a 'custom domain' for a known tenant
                 tenant = None
         path = environ['PATH_INFO']
-        path_parts, namespace, document_id, extra_path_segments = self.path_parse(path)
+        path_parts, namespace, document_id, extra_path_segments = self.parse_patch(path)
         return (tenant, namespace, document_id, extra_path_segments, path, path_parts, get_request_host(environ), environ['QUERY_STRING'])
 
-    def path_parse(self, path):
+    def parse_patch(self, path):
         path_parts = path.split('/')
         namespace = document_id = extra_path_segments = None
         if len(path_parts) > 1 and path_parts[-1] != '': #trailing /
@@ -57,6 +57,11 @@ class HostnameTenantURLPolicy():
                 if len(path_parts) > 3:
                     extra_path_segments = path_parts[3:]  
         return path_parts, namespace, document_id, extra_path_segments
+        
+    def parse(self, url):
+        parse_rslt = urlparse.urlparse(str(url))
+        path_parts, namespace, document_id, extra_path_segments = self.parse_patch(parse_rslt.path)
+        return namespace, document_id, extra_path_segments, parse_rslt
     
 if __name__ == '__main__':
     # run a few tests

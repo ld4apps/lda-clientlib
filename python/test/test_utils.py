@@ -13,6 +13,11 @@ POST_HEADERS = {
     'ce-post-reason': 'ce-create' 
     }
 
+POST_ACTION_HEADERS = {
+    'Content-type': 'application/rdf+json+ce', 
+    'Cookie': 'SSSESSIONID=%s' % encoded_signature, 
+    }
+    
 PATCH_HEADERS = {
     'Content-type': 'application/json', 
     'Cookie': 'SSSESSIONID=%s' % encoded_signature, 
@@ -34,8 +39,8 @@ def get(url):
         return None    
     return RDF_JSON_Document(r)
 
-def post(url, body):
-    r = requests.post(url, headers=POST_HEADERS, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
+def prim_post(url, body, headers):
+    r = requests.post(url, headers=headers, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
     if (r.status_code - 200) / 100 != 0: # not in the 200's
             print '######## FAILED TO CREATE url: %s status: %s text: %s body: %s' %(url, r.status_code, r.text, body)
             return None
@@ -47,9 +52,15 @@ def post(url, body):
         print '######## POSTed %s: %s, status: %d' % (resource_type, r.headers['location'], r.status_code)
         return RDF_JSON_Document(json.loads(r.text, object_hook=rdf_json_decoder), r.headers['location'])
     else:
-        print '######## POSTed %s: to: %s status: %d' % (resource_type, url, r.status_code)
+        print '######## POSTed %s to: %s status: %d' % (resource_type, url, r.status_code)
         return None if r.status_code == 200 else {}
-    
+       
+def post(url, body):
+    return prim_post(url, body, POST_HEADERS)
+           
+def post_action(url, body):
+    return prim_post(url, body, POST_ACTION_HEADERS)
+
 def patch(url, body):
     r = requests.patch(url, headers=PATCH_HEADERS, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
     if r.status_code != 200:
