@@ -194,7 +194,7 @@ class RDF_JSON_Document(UserDict):
         else:
             return [result]
 
-    def get_values(self, attribute, subject=None, default=[]):
+    def get_values(self, attribute, subject=None, default=None):
         if not subject:
             subject_url_string = self.default_subject()
         else:
@@ -203,12 +203,12 @@ class RDF_JSON_Document(UserDict):
         try:
             result = self.data[subject_url_string][attribute]    
         except (KeyError, IndexError):
-            return default
+            return default if default != None else list()
         if isinstance(result, (list, tuple)):
             if len(result) > 0:
                 return result
             else:
-                return default
+                return default if default != None else list() 
         else:
             return [result]
             
