@@ -96,6 +96,15 @@ class RDF_JSON_Document(UserDict):
         except (KeyError, IndexError):
             return None
 
+    def get_properties(self, subject=None):
+        if not subject:
+            subject = self.default_subject()
+        subject_url_string = str(subject)
+        try:
+            return self.data[subject_url_string]
+        except (KeyError, IndexError):
+            return None
+
     def getValue(self, attribute, default=None, subject=None):
         if not subject:
             subject = self.default_subject()
