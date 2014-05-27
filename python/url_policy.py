@@ -44,10 +44,10 @@ class HostnameTenantURLPolicy():
                 #TODO: look up a table to see if it's a 'custom domain' for a known tenant
                 tenant = None
         path = environ['PATH_INFO']
-        path_parts, namespace, document_id, extra_path_segments = self.parse_patch(path)
+        path_parts, namespace, document_id, extra_path_segments = self.parse_path(path)
         return (tenant, namespace, document_id, extra_path_segments, path, path_parts, get_request_host(environ), environ['QUERY_STRING'])
 
-    def parse_patch(self, path):
+    def parse_path(self, path):
         path_parts = path.split('/')
         namespace = document_id = extra_path_segments = None
         if len(path_parts) > 1 and path_parts[-1] != '': #trailing /
@@ -60,7 +60,7 @@ class HostnameTenantURLPolicy():
         
     def parse(self, url):
         parse_rslt = urlparse.urlparse(str(url))
-        path_parts, namespace, document_id, extra_path_segments = self.parse_patch(parse_rslt.path)
+        path_parts, namespace, document_id, extra_path_segments = self.parse_path(parse_rslt.path)
         return namespace, document_id, extra_path_segments, parse_rslt
     
 if __name__ == '__main__':
