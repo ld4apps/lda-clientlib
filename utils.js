@@ -850,7 +850,7 @@ ld_util = (function () {
         if (resource_url.indexOf('http:') === 0) {resource_url = resource_url.slice(5)} // don't force http if the browser is doing https
         else if (resource_url.indexOf('https:') === 0) {resource_url = resource_url.slice(6)} // don't force https if the browser is doing http
         if ('_subject' in new_resource && !hasHeader(headers, 'Content-type')) {
-            new_resource = new rdf_util.Rdf_converter().convert_to_rdf_jso(new_resource)
+            new_resource = APPLICATION_ENVIRON.rdf_converter.convert_to_rdf_jso(new_resource)
             }
         var json_str = JSON.stringify(new_resource)
         var request=new XMLHttpRequest()
