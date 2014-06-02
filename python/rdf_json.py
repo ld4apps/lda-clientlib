@@ -72,7 +72,12 @@ class RDF_JSON_Document(UserDict):
         else:
             self.graph_url = graph_url
             self.default_subject_url = default_subject_url
-            self.data = aSource           
+            if isinstance(aSource, basestring): 
+                self.data = json.loads(aSource, object_hook=rdf_json_decoder)
+            elif hasattr(aSource, 'keys') :
+                self.data = aSource
+            else:
+                raise ValueError('invalid source %s' % aSource)
     
     def graph_subject_node(self):
         if self.graph_url in self.data:
@@ -181,7 +186,10 @@ class RDF_JSON_Document(UserDict):
             subject_url_string = self.default_subject()
         attribute = str(attribute)
         if subject_url_string in self.data:
-            self.data[subject_url_string][attribute] = value
+            if value is None:
+                self.data[subject_url_string].pop(attribute, None)
+            else:
+                self.data[subject_url_string][attribute] = value
         else:
             self.data[subject_url_string] = {attribute: value}
             
@@ -261,6 +269,23 @@ class RDF_JSON_Document(UserDict):
         
     def __repr__(self):
         return 'RDF_JSON_Document(%s, %s, %s)' %(self.graph_url, self.default_subject_url, json.dumps(self, indent=4, cls=RDF_JSON_Encoder))
+
+    def __str__(self):
+        return json.dumps(self, cls=RDF_JSON_Encoder)
+
+    def check_value(self, predicate, field_errors, value_type=None, required=True, subject=None, expected_value=None):
+        value = self.get_property(predicate, subject)
+        if value == None:
+            if required:
+                field_errors.append((predicate, 'must provide value'))
+            return False
+        if value_type and not isinstance(value, value_type):
+            field_errors.append((predicate, '%s must be a %s, type is: %s' % (value, str(value_type), type(value)))) 
+            return False
+        if expected_value and not value == expected_value:
+            field_errors.append((predicate, '%s must be equal to %s value is %s' % (value, expected_value, value))) 
+            return False
+        return True
         
 class RDF_JSON_Encoder(json.JSONEncoder):
     def default(self, o):
