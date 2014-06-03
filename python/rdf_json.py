@@ -51,10 +51,11 @@ class BNode():
         return self.bnode_string
         
 class RDF_JSON_Document(UserDict):
-    # This class is designed to avoid mapping between RDF-JSON and objects.
-    # The data is kept in its RDF-JSON format as it will be exchanged with the server.
-    # The purpose of the class is to wrap the RDF-JSON to provide accessor methods to make it easy to work with the RDF-JSON.
-    
+    """
+    This class is designed to avoid mapping between RDF-JSON and objects.
+    The data is kept in its RDF-JSON format as it will be exchanged with the server.
+    The purpose of the class is to wrap the RDF-JSON to provide accessor methods to make it easy to work with the RDF-JSON.
+    """
     def __init__(self, aSource, graph_url=None, default_subject_url=None):
         if hasattr(aSource, 'status_code'):
             if aSource.status_code == 201 or aSource.status_code == 200:
@@ -110,21 +111,7 @@ class RDF_JSON_Document(UserDict):
         except (KeyError, IndexError):
             return None
 
-    def getValue(self, attribute, default=None, subject=None):
-        if not subject:
-            subject = self.default_subject()
-        subject_url_string = str(subject)
-        attribute = str(attribute)
-        try:
-            rdf_value = self.data[subject_url_string][attribute]
-        except (KeyError, IndexError):
-            return default
-        if isinstance(rdf_value, (list, tuple)):
-            return rdf_value[0] if len(rdf_value) > 0 else default
-        else:
-            return rdf_value
-
-    def get_value(self, attribute, subject=None, default=None, ):
+    def get_value(self, attribute, subject=None, default=None):
         if not subject:
             subject = self.default_subject()
         subject_url_string = str(subject)
@@ -138,79 +125,6 @@ class RDF_JSON_Document(UserDict):
         else:
             return rdf_value
             
-    def pop(self, attribute, subject=None):
-        if not subject:
-            subject = self.default_subject()
-        subject_url_string = str(subject)
-        attribute = str(attribute)
-        return self.data[subject_url_string].pop(attribute)
-    
-    def getSubject(self, attribute, default, object):
-        object_uri_string = str(object)
-        attribute = str(attribute)
-        for subject_uri_string, predicates in self.data.iteritems():
-            if attribute in predicates:
-                values = self.getValues(attribute, [], subject_uri_string)
-                for value in values:
-                    if isinstance(value, URI) and str(value) == object_uri_string:
-                        return URI(subject_uri_string)
-        return default
-
-    def getSubjects(self, attribute, object):
-        object_uri_string = str(object)
-        attribute = str(attribute)
-        subjects = []
-        for subject_uri_string, predicates in self.data.iteritems():
-            if attribute in predicates:
-                values = self.getValues(attribute, [], subject_uri_string)
-                for value in values:
-                    if isinstance(value, URI) and str(value) == object_uri_string:
-                        subjects.append(URI(subject_uri_string))
-        return subjects
-        
-    def setValue(self, attribute, value, subject=None):
-        if not subject:
-            subject_url_string = self.default_subject()
-        else:
-            subject_url_string = str(subject)
-        attribute = str(attribute)
-        if subject_url_string in self.data:
-            self.data[subject_url_string][attribute] = value
-        else:
-            self.data[subject_url_string] = {attribute: value}
-
-    def set_value(self, attribute, value, subject=None):
-        if subject:
-            subject_url_string = str(subject)
-        else:
-            subject_url_string = self.default_subject()
-        attribute = str(attribute)
-        if subject_url_string in self.data:
-            if value is None:
-                self.data[subject_url_string].pop(attribute, None)
-            else:
-                self.data[subject_url_string][attribute] = value
-        else:
-            self.data[subject_url_string] = {attribute: value}
-            
-    def getValues(self, attribute, default=[], subject=None):
-        if not subject:
-            subject_url_string = self.default_subject()
-        else:
-            subject_url_string = str(subject)
-        attribute = str(attribute)
-        try:
-            result = self.data[subject_url_string][attribute]    
-        except (KeyError, IndexError):
-            return default
-        if isinstance(result, (list, tuple)):
-            if len(result) > 0:
-                return result
-            else:
-                return default
-        else:
-            return [result]
-
     def get_values(self, attribute, subject=None, default=None):
         if not subject:
             subject_url_string = self.default_subject()
@@ -228,6 +142,50 @@ class RDF_JSON_Document(UserDict):
                 return default if default != None else list() 
         else:
             return [result]
+            
+    def pop(self, attribute, subject=None):
+        if not subject:
+            subject = self.default_subject()
+        subject_url_string = str(subject)
+        attribute = str(attribute)
+        return self.data[subject_url_string].pop(attribute)
+    
+    def get_subject(self, attribute, obj, default=None):
+        object_uri_string = str(obj)
+        attribute = str(attribute)
+        for subject_uri_string, predicates in self.data.iteritems():
+            if attribute in predicates:
+                values = self.get_values(attribute, subject_uri_string)
+                for value in values:
+                    if isinstance(value, URI) and str(value) == object_uri_string:
+                        return URI(subject_uri_string)
+        return default
+
+    def get_subjects(self, attribute, obj):
+        object_uri_string = str(obj)
+        attribute = str(attribute)
+        subjects = []
+        for subject_uri_string, predicates in self.data.iteritems():
+            if attribute in predicates:
+                values = self.get_values(attribute, subject_uri_string)
+                for value in values:
+                    if isinstance(value, URI) and str(value) == object_uri_string:
+                        subjects.append(URI(subject_uri_string))
+        return subjects
+        
+    def set_value(self, attribute, value, subject=None):
+        if subject:
+            subject_url_string = str(subject)
+        else:
+            subject_url_string = self.default_subject()
+        attribute = str(attribute)
+        if subject_url_string in self.data:
+            if value is None:
+                self.data[subject_url_string].pop(attribute, None)
+            else:
+                self.data[subject_url_string][attribute] = value
+        else:
+            self.data[subject_url_string] = {attribute: value}
             
     def add_triples(self, subject, predicates, value_array=None):
         subject_url_string = str(subject)
@@ -256,13 +214,13 @@ class RDF_JSON_Document(UserDict):
                 decl[predicate_url_string] = value_array
                 
     def get_container_members(self):
-        membershipResource = self.getValue(LDP+'membershipResource')
-        hasMemberRelation = self.getValue(LDP+'hasMemberRelation')
-        isMemberOfRelation = self.getValue(LDP+'isMemberOfRelation')
+        membershipResource = self.get_value(LDP+'membershipResource')
+        hasMemberRelation = self.get_value(LDP+'hasMemberRelation')
+        isMemberOfRelation = self.get_value(LDP+'isMemberOfRelation')
         if hasMemberRelation:
-            result = self.getValues(hasMemberRelation, [], membershipResource)
+            result = self.get_values(hasMemberRelation, membershipResource)
         else:
-            result = self.getSubjects(isMemberOfRelation, membershipResource)
+            result = self.get_subjects(isMemberOfRelation, membershipResource)
         return result
             
     add_triple = add_triples
@@ -286,6 +244,28 @@ class RDF_JSON_Document(UserDict):
             field_errors.append((predicate, '%s must be equal to %s value is %s' % (value, expected_value, value))) 
             return False
         return True
+    
+    def getValue(self, attribute, default=None, subject=None):
+        print "Obsolete function RDF_JSON_Document.getValue() - use get_value() instead."
+        #import traceback
+        #traceback.print_stack()
+        return self.get_value(attribute, subject, default)
+
+    def getValues(self, attribute, default=[], subject=None):
+        print "Obsolete function RDF_JSON_Document.getValues() - use get_values() instead."
+        return self.get_values(attribute, subject, default)
+
+    def getSubject(self, attribute, default, obj):
+        print "Obsolete function RDF_JSON_Document.getSubject() - use get_subject() instead."
+        return self.get_subject(attribute, obj, default)
+
+    def getSubjects(self, attribute, obj):
+        print "Obsolete function RDF_JSON_Document.getSubjects() - use get_subjects() instead."
+        return self.get_subjects(attribute, obj)
+
+    def setValue(self, attribute, value, subject=None):
+        print "Obsolete function RDF_JSON_Document.setValue() - use set_value() instead."
+        return self.set_value(attribute, value, subject)
         
 class RDF_JSON_Encoder(json.JSONEncoder):
     def default(self, o):
