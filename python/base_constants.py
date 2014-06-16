@@ -23,8 +23,6 @@ AC_ALL = AC_T|AC_R|AC_C|AC_D|AC_W|AC_X
 ADMIN_USER = 'http://ibm.com/ce/user/admin'
 ANY_USER = 'http://ibm.com/ce/user/any'
 
-INTERNAL_RESOURCE_HOST = 'internal' # value of 'CE-Resource-Host' header used for internal http requests
-
 # create and instance of a class from a #-separated module and class name (e.g., "some_module#SomeClass")
 def create_instance(module_and_class_name):
     parts = module_and_class_name.split('#')
