@@ -271,7 +271,6 @@ class RDF_JSON_Document(UserDict):
     def with_relative_references(self):
         result = {}
         doc_url = self.graph_url
-        print '\n\ndoc_url = ', repr(doc_url), '\n\n'
         def storage_value(item):
             if isinstance(item, URI):
                 return URI(url_unjoin(doc_url, str(item)))
@@ -316,13 +315,21 @@ class RDF_JSON_Document(UserDict):
         return RDF_JSON_Document(result, self.graph_url)
                     
 def url_unjoin(base_url, url):
+    if url == None:
+        return str(base_url)
+    else:
+        url = str(url)
+    if base_url == None:
+        return str(url)
+    else:
+        base_url = str(base_url)
     if url.startswith('_:'): # you might expect that '_' would be parsed as a scheme  by urlparse, but it isn't
         return url
     else:
         o = urlparse.urlparse(url)
         if (o.scheme == '' or o.scheme == 'http' or o.scheme == 'https'):
             if o.netloc == '': # http(s) relative url
-                if len(o.path) > 0 and p.path[0] == '/':
+                if len(o.path) > 0 and o.path[0] == '/':
                     return url
                 else:
                     abs_url = urlparse.urljoin(base_url, url) #make it absolute first 
