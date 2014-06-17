@@ -3,6 +3,7 @@ import datetime, numbers
 from UserDict import UserDict
 from dateutil.parser import parse as to_datetime
 from base_constants import XSD, LDP
+import urlparse
 
 _invalid_uri_chars = '<>" {}|\\^`'
 
@@ -266,6 +267,78 @@ class RDF_JSON_Document(UserDict):
     def setValue(self, attribute, value, subject=None):
         print "Obsolete function RDF_JSON_Document.setValue() - use set_value() instead."
         return self.set_value(attribute, value, subject)
+        
+    def with_relative_references(self):
+        result = {}
+        doc_url = self.graph_url
+        print '\n\ndoc_url = ', repr(doc_url), '\n\n'
+        def storage_value(item):
+            if isinstance(item, URI):
+                return URI(relativize_url(str(item), doc_url))
+            else:
+                return item
+        for subject, predicates in self.iteritems():
+            storage_subject = relativize_url(subject, doc_url)
+            storage_predicates = {}
+            result[storage_subject] = storage_predicates
+            for predicate, values in predicates.iteritems():
+                value = [storage_value(item) for item in values] if isinstance(values, (list, tuple)) else storage_value(values)
+                storage_predicates[predicate] = value
+        storage_doc = RDF_JSON_Document(result, relativize_url(doc_url, doc_url))
+        return storage_doc
+
+    def with_absolute_references(self):
+        url_parts = urlparse.urlparse(self.graph_url)
+        hostname = url_parts.netloc
+        def abs_url_str(url_str):
+            if url_str.startswith('/'):
+                return ''.join(('http://', hostname, url_str))
+            else:
+                return url_str
+        def rdf_value(item):
+            if isinstance(item, URI):
+                str_url = str(item)
+                if str_url.startswith('/'):
+                    return URI(''.join(('http://', hostname, str_url)))
+                else:
+                    return item
+            else:
+                return item
+        result = {}
+        for subject, predicates in self.iteritems(): 
+            result_predicates = {}
+            for predicate, storage_value_array in predicates.iteritems():
+                if isinstance(storage_value_array, (list, tuple)):
+                    result_predicates[predicate] = [rdf_value(item) for item in storage_value_array]
+                else:
+                    result_predicates[predicate] = rdf_value (storage_value_array)
+            result[abs_url_str(subject)] = result_predicates
+        return RDF_JSON_Document(result, self.graph_url)
+                    
+def relativize_url(url, base_url):
+    if url.startswith('_:'): # you might expect that '_' would be parsed as a scheme  by urlparse, but it isn't
+        return url
+    else:
+        o = urlparse.urlparse(url)
+        if (o.scheme == '' or o.scheme == 'http' or o.scheme == 'https'):
+            if o.netloc == '': # http(s) relative url
+                if len(o.path) > 0 and p.path[0] == '/':
+                    return url
+                else:
+                    abs_url = urlparse.urljoin(base_url, url) #make it absolute first 
+                    o = list(urlparse.urlparse(abs_url))
+                    o[0] = o[1] = '' # blank out the scheme and the netloc
+                    return urlparse.urlunparse(o)
+            else:
+                b = urlparse.urlparse(base_url)
+                if o.netloc == b.netloc:
+                    o = list(o)
+                    o[0] = o[1] = '' # blank out the scheme and the netloc
+                    return urlparse.urlunparse(o)
+                else:
+                    return url
+        else:
+            return url
         
 class RDF_JSON_Encoder(json.JSONEncoder):
     def default(self, o):
