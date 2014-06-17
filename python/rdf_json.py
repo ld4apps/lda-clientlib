@@ -274,17 +274,17 @@ class RDF_JSON_Document(UserDict):
         print '\n\ndoc_url = ', repr(doc_url), '\n\n'
         def storage_value(item):
             if isinstance(item, URI):
-                return URI(relativize_url(str(item), doc_url))
+                return URI(url_unjoin(doc_url, str(item)))
             else:
                 return item
         for subject, predicates in self.iteritems():
-            storage_subject = relativize_url(subject, doc_url)
+            storage_subject = url_unjoin(doc_url, subject)
             storage_predicates = {}
             result[storage_subject] = storage_predicates
             for predicate, values in predicates.iteritems():
                 value = [storage_value(item) for item in values] if isinstance(values, (list, tuple)) else storage_value(values)
                 storage_predicates[predicate] = value
-        storage_doc = RDF_JSON_Document(result, relativize_url(doc_url, doc_url))
+        storage_doc = RDF_JSON_Document(result, url_unjoin(doc_url, doc_url))
         return storage_doc
 
     def with_absolute_references(self):
@@ -315,7 +315,7 @@ class RDF_JSON_Document(UserDict):
             result[abs_url_str(subject)] = result_predicates
         return RDF_JSON_Document(result, self.graph_url)
                     
-def relativize_url(url, base_url):
+def url_unjoin(base_url, url):
     if url.startswith('_:'): # you might expect that '_' would be parsed as a scheme  by urlparse, but it isn't
         return url
     else:
