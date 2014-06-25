@@ -286,8 +286,9 @@ class RDF_JSON_Document(UserDict):
         storage_doc = RDF_JSON_Document(result, url_unjoin(doc_url, doc_url))
         return storage_doc
 
-    def with_absolute_references(self):
-        url_parts = urlparse.urlparse(self.graph_url)
+    def with_absolute_references(self, graph_url):
+        graph_url = str(graph_url)
+        url_parts = urlparse.urlparse(graph_url)
         hostname = url_parts.netloc
         def abs_url_str(url_str):
             if url_str.startswith('/'):
@@ -312,7 +313,7 @@ class RDF_JSON_Document(UserDict):
                 else:
                     result_predicates[predicate] = rdf_value (storage_value_array)
             result[abs_url_str(subject)] = result_predicates
-        return RDF_JSON_Document(result, self.graph_url)
+        return RDF_JSON_Document(result, graph_url)
                     
 def url_unjoin(base_url, url):
     if url == None:
