@@ -13,6 +13,11 @@ POST_HEADERS = {
     'ce-post-reason': 'ce-create' 
     }
 
+PUT_HEADERS = {
+    'Content-type': 'application/rdf+json+ce', 
+    'Cookie': 'SSSESSIONID=%s' % encoded_signature
+    }
+    
 POST_ACTION_HEADERS = {
     'Content-type': 'application/rdf+json+ce', 
     'Cookie': 'SSSESSIONID=%s' % encoded_signature, 
@@ -49,7 +54,7 @@ def prim_post(url, body, headers):
     except:
         resource_type = 'unknown type'
     if r.status_code == 201:
-        print '######## POSTed %s: %s, status: %d' % (resource_type, r.headers['location'], r.status_code)
+        print '######## POSTed %s: location: %s, status: %d' % (resource_type, r.headers['location'], r.status_code)
         return RDF_JSON_Document(json.loads(r.text, object_hook=rdf_json_decoder), r.headers['location'])
     else:
         print '######## POSTed %s to: %s status: %d' % (resource_type, url, r.status_code)
@@ -81,3 +86,11 @@ def delete(url):
         print '######## FAILED TO DELETE url: %s status: %s text: %s' %(url, r.status_code, r.text)
         return None
     print '######## DELETEed resource: %s, status: %d text: %s' % (url, r.status_code, r.text)
+
+def put(url, body):
+    r = requests.put(url, headers=PUT_HEADERS, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
+    if r.status_code != 200 and r.status_code != 201:
+        print '######## FAILED TO PUT url: %s status: %s text: %s' %(url, r.status_code, r.text)
+        return None
+    print '######## PUT resource: %s, status: %d' % (url, r.status_code)
+    return RDF_JSON_Document(r)
