@@ -273,17 +273,17 @@ class RDF_JSON_Document(UserDict):
         doc_url = self.graph_url
         def storage_value(item):
             if isinstance(item, URI):
-                return URI(url_unjoin(doc_url, str(item)))
+                return URI(urlunjoin(doc_url, str(item)))
             else:
                 return item
         for subject, predicates in self.iteritems():
-            storage_subject = url_unjoin(doc_url, subject)
+            storage_subject = urlunjoin(doc_url, subject)
             storage_predicates = {}
             result[storage_subject] = storage_predicates
             for predicate, values in predicates.iteritems():
                 value = [storage_value(item) for item in values] if isinstance(values, (list, tuple)) else storage_value(values)
                 storage_predicates[predicate] = value
-        storage_doc = RDF_JSON_Document(result, url_unjoin(doc_url, doc_url))
+        storage_doc = RDF_JSON_Document(result, urlunjoin(doc_url, doc_url))
         return storage_doc
 
     def with_absolute_references(self, graph_url):
@@ -315,7 +315,7 @@ class RDF_JSON_Document(UserDict):
             result[abs_url_str(subject)] = result_predicates
         return RDF_JSON_Document(result, graph_url)
                     
-def url_unjoin(base_url, url):
+def urlunjoin(base_url, url):
     if url == None:
         return str(base_url)
     else:
