@@ -42,7 +42,7 @@ class HostnameTenantURLPolicy():
                 tenant = tenant_parts[0]
             else:
                 #TODO: look up a table to see if it's a 'custom domain' for a known tenant
-                tenant = None
+                tenant = 'hostingsite'
         path = environ['PATH_INFO']
         path_parts, namespace, document_id, extra_path_segments = self.parse_path(path)
         return (tenant, namespace, document_id, extra_path_segments, path, path_parts, get_request_host(environ), environ['QUERY_STRING'])
