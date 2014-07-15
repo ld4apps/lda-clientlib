@@ -277,9 +277,9 @@ class RDF_JSON_Document(UserDict):
         print "Obsolete function RDF_JSON_Document.setValue() - use set_value() instead."
         return self.set_value(attribute, value, subject)
         
-    def with_relative_references(self):
+    def with_relative_references(self, graph_url=None):
         result = {}
-        doc_url = self.graph_url
+        doc_url = graph_url if graph_url is not None else self.graph_url
         def storage_value(item):
             if isinstance(item, URI):
                 return URI(urlunjoin(doc_url, str(item)))
@@ -292,7 +292,7 @@ class RDF_JSON_Document(UserDict):
             for predicate, values in predicates.iteritems():
                 value = [storage_value(item) for item in values] if isinstance(values, (list, tuple)) else storage_value(values)
                 storage_predicates[predicate] = value
-        storage_doc = RDF_JSON_Document(result, urlunjoin(doc_url, doc_url))
+        storage_doc = RDF_JSON_Document(result, urlunjoin(doc_url, self.graph_url))
         return storage_doc
 
     def with_absolute_references(self, graph_url):
