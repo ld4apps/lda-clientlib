@@ -37,8 +37,13 @@ DELETE_HEADERS = {
     'Cookie': 'SSSESSIONID=%s' % encoded_signature, 
     }     
 
-def get(url):
-    r = requests.get(url, headers=GET_HEADERS, verify=False)
+def get(url, resource_host=None):
+    if resource_host is not None:
+        headers = {'CE-Resource-Host': resource_host}
+        headers.update(GET_HEADERS)
+    else:
+        headers = GET_HEADERS
+    r = requests.get(url, headers=headers, verify=False)
     if r.status_code != 200:
         print '######## FAILED TO GET url: %s status_code: %s response_text: %s ' % (url, r.status_code, r.text)
         return None    
@@ -50,7 +55,7 @@ def prim_post(url, body, headers):
             print '######## FAILED TO CREATE url: %s status: %s text: %s body: %s' %(url, r.status_code, r.text, body)
             return None
     try:
-        resource_type = str(body[''][RDF+'type']).split('#')[1]
+        resource_type = str(body[''][RDF+'type']['value']).split('#')[1]
     except:
         resource_type = 'unknown type'
     if r.status_code == 201:
@@ -60,14 +65,29 @@ def prim_post(url, body, headers):
         print '######## POSTed %s to: %s status: %d' % (resource_type, url, r.status_code)
         return None if r.status_code == 200 else {}
        
-def post(url, body):
-    return prim_post(url, body, POST_HEADERS)
+def post(url, body, resource_host=None):
+    if resource_host is not None:
+        headers = {'CE-Resource-Host': resource_host}
+        headers.update(POST_HEADERS)
+    else:
+        headers = POST_HEADERS
+    return prim_post(url, body, headers)
            
-def post_action(url, body):
+def post_action(url, body, resource_host=None):
+    if resource_host is not None:
+        headers = {'CE-Resource-Host': resource_host}
+        headers.update(POST_ACTION_HEADERS)
+    else:
+        headers = POST_ACTION_HEADERS
     return prim_post(url, body, POST_ACTION_HEADERS)
 
-def patch(url, body):
-    r = requests.patch(url, headers=PATCH_HEADERS, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
+def patch(url, body, resource_host=None):
+    if resource_host is not None:
+        headers = {'CE-Resource-Host': resource_host}
+        headers.update(PATCH_HEADERS)
+    else:
+        headers = PATCH_HEADERS
+    r = requests.patch(url, headers=headers, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
     if r.status_code != 200:
         print '######## FAILED TO PATCH url: %s status: %s text: %s body: %s' %(url, r.status_code, r.text, body)
         return None
@@ -80,15 +100,25 @@ def patch(url, body):
     print '######## PATCHed %s: %s, status: %d' % (resource_type, url, r.status_code)
     return patched_resource
     
-def delete(url):
-    r = requests.delete(url, headers=DELETE_HEADERS)
+def delete(url, resource_host=None):
+    if resource_host is not None:
+        headers = {'CE-Resource-Host': resource_host}
+        headers.update(DELETE_HEADERS)
+    else:
+        headers = DELETE_HEADERS
+    r = requests.delete(url, headers=headers)
     if r.status_code != 200 and r.status_code != 204:
         print '######## FAILED TO DELETE url: %s status: %s text: %s' %(url, r.status_code, r.text)
         return None
     print '######## DELETEed resource: %s, status: %d text: %s' % (url, r.status_code, r.text)
 
-def put(url, body):
-    r = requests.put(url, headers=PUT_HEADERS, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
+def put(url, body, resource_host=None):
+    if resource_host is not None:
+        headers = {'CE-Resource-Host': resource_host}
+        headers.update(PUT_HEADERS)
+    else:
+        headers = PUT_HEADERS
+    r = requests.put(url, headers=headers, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
     if r.status_code != 200 and r.status_code != 201:
         print '######## FAILED TO PUT url: %s status: %s text: %s' %(url, r.status_code, r.text)
         return None
