@@ -112,6 +112,15 @@ class RDF_JSON_Document(UserDict):
         except (KeyError, IndexError):
             return None
 
+    def set_properties(self, properties, subject=None):
+        if not subject:
+            subject = self.default_subject()
+        subject_url_string = str(subject)
+        if subject_url_string in self.data:
+            self.data[subject_url_string].update(properties)
+        else:
+            self.data[subject_url_string] = properties.copy()
+            
     def get_value(self, attribute, subject=None, default=None):
         if not subject:
             subject = self.default_subject()
@@ -315,10 +324,15 @@ class RDF_JSON_Document(UserDict):
             result[abs_url_str(subject)] = result_predicates
         return RDF_JSON_Document(result, graph_url)
         
-    def update_doc(self, rdf_document):
-        for subject, subject_node in rdf_document.iteritems():
-            for predicate, value_array in subject_node.iteritems():
-                self.add_triples(subject, predicate, value_array)
+    def update_doc(self, rdf_document, subject=None):
+        if subject:
+            subject = str(subject)
+            properties = rdf_document.get_properties(subject)
+            if properties:
+                self.set_properties(properties, subject)
+        else:
+            for subject, properties in rdf_document.iteritems():
+                self.set_properties(properties, subject)
                     
 def urlunjoin(base_url, url):
     if url == None:
