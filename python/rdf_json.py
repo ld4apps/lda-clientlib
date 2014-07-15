@@ -314,6 +314,11 @@ class RDF_JSON_Document(UserDict):
                     result_predicates[predicate] = rdf_value (storage_value_array)
             result[abs_url_str(subject)] = result_predicates
         return RDF_JSON_Document(result, graph_url)
+        
+    def update_doc(self, rdf_document):
+        for subject, subject_node in rdf_document.iteritems():
+            for predicate, value_array in subject_node.iteritems():
+                self.add_triples(subject, predicate, value_array)
                     
 def urlunjoin(base_url, url):
     if url == None:
