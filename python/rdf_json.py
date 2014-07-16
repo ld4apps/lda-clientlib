@@ -476,7 +476,8 @@ class RDF_json_to_compact_json_converter():
             return value_struct
             
     def compact_json_object(self, subject, document, stack):
-        stack = stack + [subject] # make our own copy to avoid updating caller's stack. This maximizes duplication while still breaking cycles.
+        #stack = stack + [subject] # make our own copy to avoid updating caller's stack. This maximizes duplication while still breaking cycles.
+        stack.append(subject) # only include each subject once
         compact_json = { '_subject': subject } # @id causes problems with some data binding frameworks
         for predicate, value_array in document[subject].iteritems():
             key = self.compact_predicate(predicate)

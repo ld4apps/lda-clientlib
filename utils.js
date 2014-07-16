@@ -514,26 +514,6 @@ rdf_util = (function () {
 
         var already_converted = {}
         var simple_jso = make_simple_jso(rdf_jso.default_subject, already_converted)
-        if (simple_jso['rdf_type'] && simple_jso['rdf_type'].toString() == LDP+'DirectContainer') {
-            var membershipResource = rdf_jso.getValue(LDP+'membershipResource').toString()
-            var hasMemberRelation = rdf_jso.getValue(LDP+'hasMemberRelation')
-            if (hasMemberRelation) {
-                sjo_membershipSubject = simple_jso['ldp_membershipResource']
-                cpct_membershipPredicate = compact_predicate(hasMemberRelation.toString())
-                simple_jso['ldp_contains'] = 
-                    !(sjo_membershipSubject instanceof URI) && cpct_membershipPredicate in sjo_membershipSubject ?
-                        sjo_membershipSubject[cpct_membershipPredicate] : []
-                }
-            else {
-                var rdf_members = rdf_jso.getSubjects(rdf_jso.getValue(LDP+'isMemberOfRelation').toString(), membershipResource)
-                var jso_members = []
-                for (var i=0; i<rdf_members.length; i++) {
-                    var member = rdf_members[i]
-                    jso_members.push(member in already_converted ? already_converted[member] : make_simple_jso(member, already_converted))
-                    }
-                simple_jso['ldp_contains'] = jso_members
-                }
-            }
         var ommitted_subjects = {}
         for (var subject in rdf_jso) {
             if (! (subject in already_converted)) {
