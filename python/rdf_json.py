@@ -14,7 +14,10 @@ def _is_valid_uri(uri):
 
 class URI():
     def __init__(self, uri_string):
-        if not isinstance(uri_string, basestring) or not _is_valid_uri(uri_string): raise ValueError(uri_string)
+        if isinstance(uri_string, URI):
+            uri_string = str(uri_string)
+        else:
+            if not isinstance(uri_string, basestring) or not _is_valid_uri(uri_string): raise ValueError(repr(uri_string))
         self.uri_string = uri_string   
         
     def __eq__(self, other):
