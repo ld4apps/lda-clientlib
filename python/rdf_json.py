@@ -325,7 +325,7 @@ class RDF_JSON_Document(UserDict):
                 else:
                     result_predicates[predicate] = rdf_value (storage_value_array)
             result[abs_url_str(subject)] = result_predicates
-        return RDF_JSON_Document(result, graph_url)
+        return RDF_JSON_Document(result, abs_url_str(self.graph_url))
         
     def update_doc(self, rdf_document, subject=None):
         if subject:
