@@ -12,6 +12,17 @@ FOAF = 'http://xmlns.com/foaf/0.1/'
 TRS = 'http://jazz.net/ns/trs#'
 AC = 'http://ibm.com/ce/ac/ns#'
 
+NAMESPACE_MAPPINGS = {
+    RDFS : 'rdfs',
+    RDF  : 'rdf', 
+    LDP :  'ldp',
+    XSD :  'xsd',
+    DC :   'dc',
+    CE :   'ce',
+    OWL :  'owl',
+    AC :   'ac' # TODO: consider changing ac:resource-group to ce:resource-group, and then remove this line
+    }
+
 AC_T = 0x01
 AC_R = 0x02
 AC_C = 0x04
