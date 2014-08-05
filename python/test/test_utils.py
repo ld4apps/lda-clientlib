@@ -55,7 +55,8 @@ def prim_post(url, body, headers):
             print '######## FAILED TO CREATE url: %s status: %s text: %s body: %s' %(url, r.status_code, r.text, body)
             return None
     try:
-        resource_type = str(body[''][RDF+'type']['value']).split('#')[1]
+        resource_type = RDF_JSON_Document(r).get_value(RDF+'type')
+        resource_type = str(resource_type).split('#')[1]
     except:
         resource_type = 'unknown type'
     if r.status_code == 201:
