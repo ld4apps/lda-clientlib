@@ -66,7 +66,7 @@ class RDF_JSON_Document(UserDict):
                 try:
                     self.data = json.loads(aSource.text, object_hook=rdf_json_decoder)
                 except ValueError:
-                    return None
+                    raise ValueError("No JSON object could be decoded from: %s" % aSource.text)
             if aSource.status_code == 201 :
                 self.graph_url = aSource.headers['Location']
             elif aSource.status_code == 200:
