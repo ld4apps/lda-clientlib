@@ -43,14 +43,14 @@ def get(url, resource_host=None):
         headers.update(GET_HEADERS)
     else:
         headers = GET_HEADERS
-    r = requests.get(url, headers=headers, verify=False)
+    r = requests.get(str(url), headers=headers, verify=False)
     if r.status_code != 200:
         print '######## FAILED TO GET url: %s status_code: %s response_text: %s ' % (url, r.status_code, r.text)
         return None    
     return RDF_JSON_Document(r)
 
 def prim_post(url, body, headers):
-    r = requests.post(url, headers=headers, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
+    r = requests.post(str(url), headers=headers, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
     if (r.status_code - 200) / 100 != 0: # not in the 200's
             print '######## FAILED TO CREATE url: %s status: %s text: %s body: %s' %(url, r.status_code, r.text, body)
             return None
@@ -88,7 +88,7 @@ def patch(url, body, resource_host=None):
         headers.update(PATCH_HEADERS)
     else:
         headers = PATCH_HEADERS
-    r = requests.patch(url, headers=headers, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
+    r = requests.patch(str(url), headers=headers, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
     if r.status_code != 200:
         print '######## FAILED TO PATCH url: %s status: %s text: %s body: %s' %(url, r.status_code, r.text, body)
         return None
@@ -107,7 +107,7 @@ def delete(url, resource_host=None):
         headers.update(DELETE_HEADERS)
     else:
         headers = DELETE_HEADERS
-    r = requests.delete(url, headers=headers)
+    r = requests.delete(str(url), headers=headers)
     if r.status_code != 200 and r.status_code != 204:
         print '######## FAILED TO DELETE url: %s status: %s text: %s' %(url, r.status_code, r.text)
         return None
@@ -119,7 +119,7 @@ def put(url, body, resource_host=None):
         headers.update(PUT_HEADERS)
     else:
         headers = PUT_HEADERS
-    r = requests.put(url, headers=headers, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
+    r = requests.put(str(url), headers=headers, data=json.dumps(body, cls=RDF_JSON_Encoder), verify=False)
     if r.status_code != 200 and r.status_code != 201:
         print '######## FAILED TO PUT url: %s status: %s text: %s' %(url, r.status_code, r.text)
         return None
