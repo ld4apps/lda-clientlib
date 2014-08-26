@@ -20,7 +20,7 @@ class HostnameTenantURLPolicy():
                 parts.extend(extra_segments)
         else:
             if extra_segments is not None:
-                raise ValueError
+                raise ValueError('if document_id is None, extra_segments must also be None')
             if namespace is not None:
                 parts = ['http:/', hostname, namespace] if hostname is not None else ['', namespace]
             else:
