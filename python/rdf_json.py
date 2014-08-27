@@ -134,7 +134,7 @@ class RDF_JSON_Document(UserDict):
         except (KeyError, IndexError):
             return default
         if isinstance(rdf_value, (list, tuple)):
-            return rdf_value[0] if len(rdf_value) > 0 else default
+            return rdf_value if len(rdf_value) > 0 else default
         else:
             return rdf_value
             
