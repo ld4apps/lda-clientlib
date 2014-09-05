@@ -23,13 +23,14 @@ NAMESPACE_MAPPINGS = {
     AC :   'ac' # TODO: consider changing ac:resource-group to ce:resource-group, and then remove this line
     }
 
-AC_T = 0x01
-AC_R = 0x02
-AC_C = 0x04
-AC_D = 0x08
-AC_W = 0x10
-AC_X = 0x20
-AC_ALL = AC_T|AC_R|AC_C|AC_D|AC_W|AC_X
+AC_T = 0x01 # Transform
+AC_R = 0x02 # Read
+AC_C = 0x04 # Create
+AC_D = 0x08 # Delete
+AC_W = 0x10 # Write
+AC_X = 0x20 # Execute
+AC_A = 0x40 # Admin
+AC_ALL = AC_T|AC_R|AC_C|AC_D|AC_W|AC_X|AC_A
 
 ADMIN_USER = 'http://ibm.com/ce/user/admin'
 ANY_USER = 'http://ibm.com/ce/user/any'
@@ -41,7 +42,7 @@ def create_instance(module_and_class_name):
     class_name = parts[1]
     module = importlib.import_module(module_name)
     class_ = getattr(module, class_name)
-    return class_()    
+    return class_()
 
 if 'URL_POLICY_CLASS' in os.environ:
     URL_POLICY = create_instance(os.environ['URL_POLICY_CLASS'])
