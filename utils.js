@@ -578,9 +578,9 @@ rdf_util = (function () {
 
         var rdf_jso = new Rdf_Jso(simple_jso['_subject'])
         make_rdf_jso_subject(simple_jso, rdf_jso)
-        for (var subject in this.ommitted_subjects) {
+        for (var subject in simple_jso.ommitted_subjects) {
             if (subject in rdf_jso) {throw 'unexpected collision'}
-            rdf_jso[subject] = this.ommitted_subjects[subject]
+            rdf_jso[subject] = simple_jso.ommitted_subjects[subject]
             }
         return rdf_jso
         }
