@@ -66,12 +66,12 @@ def prim_post(url, body, headers):
         print '######## POSTed %s to: %s status: %d' % (resource_type, url, r.status_code)
         return None if r.status_code == 200 else {}
        
-def post(url, body, resource_host=None):
+def post(url, body, resource_host=None, headers={}):
     if resource_host is not None:
-        headers = {'CE-Resource-Host': resource_host}
-        headers.update(POST_HEADERS)
-    else:
-        headers = POST_HEADERS
+        headers['CE-Resource-Host'] = resource_host
+    in_headers = headers
+    headers = POST_HEADERS.copy()
+    headers.update(in_headers)
     return prim_post(url, body, headers)
            
 def post_action(url, body, resource_host=None):

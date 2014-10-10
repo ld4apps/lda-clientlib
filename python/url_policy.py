@@ -15,16 +15,16 @@ class HostnameTenantURLPolicy():
         # hostname is the request hostname. If the hostname is null we are building a relative url.
         # The caller is responsible for assuring that the hostname is compatible with the tenant.
         if document_id is not None:
-            parts = ['http:/', hostname, namespace, document_id] if hostname is not None else ['', namespace, document_id]
+            parts = ['/', hostname, namespace, document_id] if hostname is not None else ['', namespace, document_id]
             if extra_segments is not None:
                 parts.extend(extra_segments)
         else:
             if extra_segments is not None:
                 raise ValueError('if document_id is None, extra_segments must also be None')
             if namespace is not None:
-                parts = ['http:/', hostname, namespace] if hostname is not None else ['', namespace]
+                parts = ['/', hostname, namespace] if hostname is not None else ['', namespace]
             else:
-                parts = ['http:/', hostname, ''] if hostname is not None else ['','']
+                parts = ['/', hostname, ''] if hostname is not None else ['','']
         result =  '/'.join(parts)
         if query_string:
             return '?'.join((result, query_string))
