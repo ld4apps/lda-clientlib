@@ -67,8 +67,13 @@ def prim_post(url, body, headers):
         return None if r.status_code == 200 else {}
        
 def post(url, body, resource_host=None, headers={}):
+    url = str(url)
     if resource_host is not None:
         headers['CE-Resource-Host'] = resource_host
+    if url.startswith('//'):
+        url = 'http:' + url
+    elif url.startswith('/'):
+        url = 'http://%s%s' % (resource_host, url)
     in_headers = headers
     headers = POST_HEADERS.copy()
     headers.update(in_headers)
