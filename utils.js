@@ -875,8 +875,7 @@ ld_util = (function () {
         original_resource_url = resource_url = resource_url.toString()
         if (resource_url.indexOf('http:') === 0) {resource_url = resource_url.slice(5)} // don't force http if the browser is doing https
         else if (resource_url.indexOf('https:') === 0) {resource_url = resource_url.slice(6)} // don't force https if the browser is doing http
-        var patch = [modification_count, patch_struct]
-        var json_str = JSON.stringify(patch)
+        var json_str = JSON.stringify(patch_struct)
         var request=new XMLHttpRequest()
         request.resource_url = original_resource_url // we will need this later to construct the rdf_util from the response
         if (!!handle_result) {
@@ -887,9 +886,10 @@ ld_util = (function () {
                 }
             }
         request.open("PATCH", resource_url, !!handle_result)
+        request.setRequestHeader('CE-ModificationCount', modification_count.toString())
         set_headers(headers, request)
         if (!hasHeader(headers, 'Content-type')) {
-            request.setRequestHeader('Content-type', 'application/json')
+            request.setRequestHeader('Content-type', 'application/rdf+json+ce')
             }
         //request.setRequestHeader('Content-Length', json_str.length)
         request.send(json_str)
