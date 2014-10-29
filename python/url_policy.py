@@ -6,8 +6,8 @@ if 'HOSTINGSITE_HOST' in os.environ:
 else:
     HOSTINGSITE_HOST = None
     
-def get_request_host(environ):
-    return environ.get('HTTP_CE_RESOURCE_HOST') or environ['HTTP_HOST']
+def get_request_host(environ): # TODO: this function should be moved to a different module in lda-clientlib (e.g., clientutils.py)
+    return environ.get('HTTP_CE_RESOURCE_HOST') or environ.get('HTTP_HOST')
 
 # This class implements a URL Policy where the tenant is part of (or derived from) the hostname (e.g., http://cloudsupplements.cloudapps4.me/cat/1.2)
 class HostnameTenantURLPolicy():
@@ -31,21 +31,25 @@ class HostnameTenantURLPolicy():
         else:
             return result
      
-    def get_url_components(self, environ): 
-        request_host = get_request_host(environ).lower()
-        request_host = request_host if len(request_host.split(':')) > 1 else request_host+':80'
-        if HOSTINGSITE_HOST is None or request_host == HOSTINGSITE_HOST: 
-            tenant = 'hostingsite'
-        else:
-            tenant_parts = request_host.split('.')
-            if '.'.join(tenant_parts[1:]) == HOSTINGSITE_HOST:
-                tenant = tenant_parts[0]
-            else:
-                #TODO: look up a table to see if it's a 'custom domain' for a known tenant
+    def get_url_components(self, environ):
+        request_host = get_request_host(environ)
+        if request_host is not None:
+            tmp_req_host = request_host.lower()
+            tmp_req_host = tmp_req_host if len(tmp_req_host.split(':')) > 1 else tmp_req_host+':80'
+            if HOSTINGSITE_HOST is None or tmp_req_host == HOSTINGSITE_HOST: 
                 tenant = 'hostingsite'
+            else:
+                tenant_parts = tmp_req_host.split('.')
+                if '.'.join(tenant_parts[1:]) == HOSTINGSITE_HOST:
+                    tenant = tenant_parts[0]
+                else:
+                    #TODO: look up a table to see if it's a 'custom domain' for a known tenant
+                    tenant = 'hostingsite'
+        else:
+            tenant = None
         path = environ['PATH_INFO']
         path_parts, namespace, document_id, extra_path_segments = self.parse_path(path)
-        return (tenant, namespace, document_id, extra_path_segments, path, path_parts, get_request_host(environ), environ['QUERY_STRING'])
+        return (tenant, namespace, document_id, extra_path_segments, path, path_parts, request_host, environ['QUERY_STRING'])
 
     def parse_path(self, path):
         path_parts = path.split('/')
