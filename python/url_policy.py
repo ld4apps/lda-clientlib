@@ -30,16 +30,15 @@ class HostnameTenantURLPolicy():
             return '?'.join((result, query_string))
         else:
             return result
-     
-    def get_url_components(self, environ):
-        request_host = get_request_host(environ)
-        if request_host is not None:
-            tmp_req_host = request_host.lower()
-            tmp_req_host = tmp_req_host if len(tmp_req_host.split(':')) > 1 else tmp_req_host+':80'
-            if HOSTINGSITE_HOST is None or tmp_req_host == HOSTINGSITE_HOST: 
+
+    def get_tenant(self, netloc, path):
+        if netloc is not None:
+            netloc = netloc.lower()
+            netloc = netloc if len(netloc.split(':')) > 1 else netloc+':80'
+            if HOSTINGSITE_HOST is None or netloc == HOSTINGSITE_HOST: 
                 tenant = 'hostingsite'
             else:
-                tenant_parts = tmp_req_host.split('.')
+                tenant_parts = netloc.split('.')
                 if '.'.join(tenant_parts[1:]) == HOSTINGSITE_HOST:
                     tenant = tenant_parts[0]
                 else:
@@ -47,7 +46,12 @@ class HostnameTenantURLPolicy():
                     tenant = 'hostingsite'
         else:
             tenant = None
+        return tenant
+            
+    def get_url_components(self, environ):
+        request_host = get_request_host(environ)
         path = environ['PATH_INFO']
+        tenant = self.get_tenant(request_host, path)
         path_parts, namespace, document_id, extra_path_segments = self.parse_path(path)
         return (tenant, namespace, document_id, extra_path_segments, path, path_parts, request_host, environ['QUERY_STRING'])
 
