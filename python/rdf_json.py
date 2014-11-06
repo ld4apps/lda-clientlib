@@ -242,7 +242,7 @@ class RDF_JSON_Document(UserDict):
         return 'RDF_JSON_Document(%s, %s, %s)' %(self.graph_url, self.default_subject_url, json.dumps(self, indent=4, cls=RDF_JSON_Encoder))
 
     def __str__(self):
-        return json.dumps(self, cls=RDF_JSON_Encoder)
+        return json.dumps(self, cls=RDF_JSON_Encoder, indent=4)
 
     def check_value(self, predicate, field_errors, value_type=None, required=True, subject=None, expected_value=None):
         value = self.get_property(predicate, subject)
