@@ -12,7 +12,7 @@ class HostnameTenantURLPolicy():
             hostname_and_port = hostname.split(':')
             hostname_parts = hostname_and_port[0].split('.')
             if hostname_parts[0] != tenant:
-                hostname_parts[0] = tenant
+                hostname_parts[0] = tenant.lower()
                 new_hostname = '.'.join(hostname_parts)
                 hostname_and_port[0] = new_hostname
                 hostname = ':'.join(hostname_and_port)
