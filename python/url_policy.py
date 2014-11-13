@@ -1,19 +1,24 @@
 import os, urlparse
 
-if 'HOSTINGSITE_HOST' in os.environ:
-    HOSTINGSITE_HOST = os.environ['HOSTINGSITE_HOST'].lower() # hostname and port (if there is one)
-    HOSTINGSITE_HOST = HOSTINGSITE_HOST if len(HOSTINGSITE_HOST.split(':')) > 1 else HOSTINGSITE_HOST+':80'
-else:
-    HOSTINGSITE_HOST = None
-    
 def get_request_host(environ): # TODO: this function should be moved to a different module in lda-clientlib (e.g., clientutils.py)
     return environ.get('HTTP_CE_RESOURCE_HOST') or environ.get('HTTP_HOST')
 
 # This class implements a URL Policy where the tenant is part of (or derived from) the hostname (e.g., http://cloudsupplements.cloudapps4.me/cat/1.2)
 class HostnameTenantURLPolicy():
-    def construct_url(self, hostname, tenant, namespace=None, document_id=None, extra_segments=None, query_string=None):
+    def construct_url(self, hostname, tenant=None, namespace=None, document_id=None, extra_segments=None, query_string=None):
         # hostname is the request hostname. If the hostname is null we are building a relative url.
         # The caller is responsible for assuring that the hostname is compatible with the tenant.
+        if tenant:
+            hostname_and_port = hostname.split(':')
+            hostname_parts = hostname_and_port[0].split('.')
+            if hostname_parts[0] != tenant:
+                if len(hostname_parts) > 1 and hostname_parts[1] != tenant:
+                    hostname_parts[0] = tenant.lower()
+                    new_hostname = '.'.join(hostname_parts)
+                else:
+                    new_hostname = tenant
+                hostname_and_port[0] = new_hostname
+                hostname = ':'.join(hostname_and_port)
         if document_id is not None:
             parts = ['http:/', hostname, namespace, document_id] if hostname is not None else ['', namespace, document_id]
             if extra_segments is not None:
@@ -33,17 +38,7 @@ class HostnameTenantURLPolicy():
 
     def get_tenant(self, netloc, path):
         if netloc is not None:
-            netloc = netloc.lower()
-            netloc = netloc if len(netloc.split(':')) > 1 else netloc+':80'
-            if HOSTINGSITE_HOST is None or netloc == HOSTINGSITE_HOST: 
-                tenant = 'hostingsite'
-            else:
-                tenant_parts = netloc.split('.')
-                if '.'.join(tenant_parts[1:]) == HOSTINGSITE_HOST:
-                    tenant = tenant_parts[0]
-                else:
-                    #TODO: look up a table to see if it's a 'custom domain' for a known tenant
-                    tenant = 'hostingsite'
+            tenant = netloc.split(':')[0].split('.')[0].lower()
         else:
             tenant = None
         return tenant
