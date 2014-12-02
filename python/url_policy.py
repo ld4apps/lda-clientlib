@@ -12,11 +12,11 @@ class HostnameTenantURLPolicy():
             hostname_and_port = hostname.split(':')
             hostname_parts = hostname_and_port[0].split('.')
             if hostname_parts[0] != tenant:
-                if len(hostname_parts) > 1 and hostname_parts[1] != tenant:
+                if len(hostname_parts) > 1:
                     hostname_parts[0] = tenant.lower()
                     new_hostname = '.'.join(hostname_parts)
                 else:
-                    new_hostname = tenant
+                    raise ValueError('no tenant found in hostname: %s' % hostname) # used to be: "new_hostname = tenant", put back if causing problems
                 hostname_and_port[0] = new_hostname
                 hostname = ':'.join(hostname_and_port)
         if document_id is not None:
