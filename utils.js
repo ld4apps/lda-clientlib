@@ -1101,7 +1101,7 @@ misc_util = (function () {
     function History_Tracker(resource_url, already_in_history, original_document_url) {
         this.resource_url = resource_url
         this.already_in_history = already_in_history
-        this.original_document_url =original_document_url
+        this.original_document_url = original_document_url
         }
     History_Tracker.prototype.accept_url = function() {
         if (!this.already_in_history) { // if it's a history event, there is already a history entry, so don't make another
@@ -1155,7 +1155,7 @@ misc_util = (function () {
             var history_tracker = new History_Tracker(window.location.href, true)
             if (navigator.userAgent.indexOf('Firefox') < 0) {
                 /* If it's not Firefox, the event may not be for this page. Previously we made sure that the state for the event would include a URL we can use to check.*/
-                if (event.state && event.state.original_document_url == self.original_document_url) { // it really is for us
+                if (event.state) {// && event.state.original_document_url == self.original_document_url) { // it really is for us
                     self.get_resource_and_show_view(window.location.href, history_tracker)
                     }
                 else { // Event for a different page. Firefox would have loaded the page for us instead of sending us the event. Chrome and IE work the other way.
