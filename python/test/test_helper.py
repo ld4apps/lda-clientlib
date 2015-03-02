@@ -13,7 +13,7 @@ USER1_URL = '%s/user1#owner' % account_container_url
 USER2_URL = '%s/user2#owner' % account_container_url
 
 
-def make_headers(verb='GET', username=None, modification_count=None):
+def make_headers(verb='GET', username=None, revision=None):
     if verb not in ('GET', 'POST', 'PATCH', 'DELETE'):
         raise Exception('invalid header type')
 
@@ -31,7 +31,7 @@ def make_headers(verb='GET', username=None, modification_count=None):
         header.update({'ce-post-reason': 'ce-create'})
     elif verb == 'PATCH':
         header.update({'Content-type': 'application/rdf+json+ce'})
-        header.update({'CE-ModificationCount': modification_count})
+        header.update({'CE-Revision': revision})
 
     return header
 
@@ -91,12 +91,12 @@ def update(resource_url, patch_prop, patch_value, username=None, assert_code_upd
 
     # if we expect to be able to read, get modcount and verify we are actually changing something
     if assert_code_read == 200:
-        modcount = r_doc[r_doc.default_subject()][CE+'modificationCount']
+        revision = r_doc[r_doc.default_subject()][CE+'revision']
          # check that the patch property's value isn't already what we're going to change it to
         assert r_doc[r_doc.default_subject()][patch_prop] != patch_value
 
     # do update
-    r = update_simple(resource_url, username, modcount, patch_prop, patch_value, assert_code_update)
+    r = update_simple(resource_url, username, revision, patch_prop, patch_value, assert_code_update)
 
     # if we expect success, verify that patch property changed
     if assert_code_update == 200:
