@@ -1,4 +1,4 @@
-import os, urlparse
+import os, urlparse, urllib
 
 def get_request_host(environ): # TODO: this function should be moved to a different module in lda-clientlib (e.g., clientutils.py)
     return environ.get('HTTP_CE_RESOURCE_HOST') or environ.get('HTTP_HOST')
@@ -56,7 +56,7 @@ class HostnameTenantURLPolicy():
         if len(path_parts) > 1 and path_parts[-1] != '': #trailing /
             namespace = path_parts[1]
             if len(path_parts) > 2:
-                document_id = path_parts[2]
+                document_id = urllib.quote(path_parts[2], '%') # TODO: Fix this doesn't seem to be encoding international characters the same way that the browser does.
                 if len(path_parts) > 3:
                     extra_path_segments = path_parts[3:]  
         return path_parts, namespace, document_id, extra_path_segments
