@@ -12,7 +12,7 @@ def _is_valid_uri(uri):
         if c in uri: return False
     return True
 
-class URI():
+class URI(object):
     def __init__(self, uri_string):
         if isinstance(uri_string, URI):
             uri_string = str(uri_string)
@@ -35,7 +35,7 @@ class URI():
     def __str__(self):
         return self.uri_string
 
-class BNode():
+class BNode(object):
     def __init__(self, bnode_string):
         self.bnode_string = bnode_string   
         
@@ -457,41 +457,56 @@ class RDF_json_to_compact_json_converter():
                 return prefix + '_' + predicate[len(namespace):]
         return predicate
       
-    def compact_json_value(self, value_struct, document, stack):
+    def compact_json_value(self, value_struct, document, stack, deferred):
         if hasattr(value_struct, 'keys') and 'value' in value_struct:
             value = value_struct['value']
             value_type = value_struct['type']
             if (value_type == 'uri' or value_type == 'bnode') and value in document and value not in stack:
-                return self.compact_json_object(value, document, stack)
+                return self.compact_json_stub(value, document, stack, deferred)
             else:
                 return value
         elif isinstance(value_struct, URI):
             url_string = str(value_struct)
             if url_string in document and url_string not in stack:
-                return self.compact_json_object(url_string, document, stack)
+                return self.compact_json_stub(url_string, document, stack, deferred)
             else:
                 return url_string
         elif hasattr(value_struct, 'bnoode_string') and value_struct.bnode_string in document and value_struct.bnode_string not in stack:
-            return self.compact_json_object(value_struct.bnode_string, document, stack)
+            return self.compact_json_stub(value_struct.bnode_string, document, stack, deferred)
         elif isinstance(value_struct, datetime.datetime):
             return value_struct.isoformat()
         else:
             return value_struct
             
-    def compact_json_object(self, subject, document, stack):
-        #stack = stack + [subject] # make our own copy to avoid updating caller's stack. This maximizes duplication while still breaking cycles.
-        stack.append(subject) # only include each subject once
-        compact_json = { '_subject': subject } # @id causes problems with some data binding frameworks
-        for predicate, value_array in document[subject].iteritems():
-            key = self.compact_predicate(predicate)
-            if isinstance(value_array, (list, tuple)):
-                compact_json[key] = []
-                for value_struct in value_array:
-                    compact_json[key].append(self.compact_json_value(value_struct, document, stack))
-            else:
-                compact_json[key] = self.compact_json_value(value_array, document, stack)
+    def compact_json_stub(self, subject, document, stack, deferred):
+        stack.add(subject) # only include each subject once
+        compact_json = { '_subject': subject }
+        deferred.append(compact_json)
         return compact_json
+        
+    def add_compact_property(self, compact_json, predicate, value_array, document, stack, deferred):
+        key = self.compact_predicate(predicate)
+        if isinstance(value_array, (list, tuple)):
+            compact_json[key] = []
+            for value_struct in value_array:
+                compact_json[key].append(self.compact_json_value(value_struct, document, stack, deferred))
+        else:
+            compact_json[key] = self.compact_json_value(value_array, document, stack, deferred)
+    
+    def fill_in_stub(self, compact_json, document, stack, deferred):
+        subject = compact_json['_subject']
+        document_subject = document[subject]
+        if LDP+'contains' in document_subject:
+            self.add_compact_property(compact_json, LDP+'contains', document_subject[LDP+'contains'], document, stack, deferred)
+        for predicate, value_array in document[subject].iteritems():
+            if predicate != LDP+'contains':
+                self.add_compact_property(compact_json, predicate, value_array, document, stack, deferred)
 
     def convert_to_compact_json(self, document):
-        compact_json = self.compact_json_object(document.default_subject(), document, [])
-        return compact_json
+        stack = set()
+        deferred = []
+        result = self.compact_json_stub(document.default_subject(), document, stack, deferred)
+        while deferred:
+            object = deferred.pop(0)
+            self.fill_in_stub(object, document, stack, deferred)
+        return result
