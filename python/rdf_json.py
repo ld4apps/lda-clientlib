@@ -12,7 +12,7 @@ def _is_valid_uri(uri):
         if c in uri: return False
     return True
 
-class URI():
+class URI(object):
     def __init__(self, uri_string):
         if isinstance(uri_string, URI):
             uri_string = str(uri_string)
@@ -35,7 +35,7 @@ class URI():
     def __str__(self):
         return self.uri_string
 
-class BNode():
+class BNode(object):
     def __init__(self, bnode_string):
         self.bnode_string = bnode_string   
         
@@ -457,41 +457,108 @@ class RDF_json_to_compact_json_converter():
                 return prefix + '_' + predicate[len(namespace):]
         return predicate
       
-    def compact_json_value(self, value_struct, document, stack):
+    def compact_json_value(self, value_struct, document, stack, deferred):
         if hasattr(value_struct, 'keys') and 'value' in value_struct:
             value = value_struct['value']
             value_type = value_struct['type']
             if (value_type == 'uri' or value_type == 'bnode') and value in document and value not in stack:
-                return self.compact_json_object(value, document, stack)
+                return self.compact_json_stub(value, document, stack, deferred)
             else:
                 return value
         elif isinstance(value_struct, URI):
             url_string = str(value_struct)
             if url_string in document and url_string not in stack:
-                return self.compact_json_object(url_string, document, stack)
+                return self.compact_json_stub(url_string, document, stack, deferred)
             else:
                 return url_string
         elif hasattr(value_struct, 'bnoode_string') and value_struct.bnode_string in document and value_struct.bnode_string not in stack:
-            return self.compact_json_object(value_struct.bnode_string, document, stack)
+            return self.compact_json_stub(value_struct.bnode_string, document, stack, deferred)
         elif isinstance(value_struct, datetime.datetime):
             return value_struct.isoformat()
         else:
             return value_struct
             
-    def compact_json_object(self, subject, document, stack):
-        #stack = stack + [subject] # make our own copy to avoid updating caller's stack. This maximizes duplication while still breaking cycles.
-        stack.append(subject) # only include each subject once
-        compact_json = { '_subject': subject } # @id causes problems with some data binding frameworks
-        for predicate, value_array in document[subject].iteritems():
-            key = self.compact_predicate(predicate)
-            if isinstance(value_array, (list, tuple)):
-                compact_json[key] = []
-                for value_struct in value_array:
-                    compact_json[key].append(self.compact_json_value(value_struct, document, stack))
-            else:
-                compact_json[key] = self.compact_json_value(value_array, document, stack)
+    def compact_json_stub(self, subject, document, stack, deferred):
+        stack.add(subject) # only include each subject once
+        compact_json = { '_subject': subject }
+        deferred.append(compact_json)
         return compact_json
+        
+    def add_compact_property(self, compact_json, predicate, value_array, document, stack, deferred):
+        key = self.compact_predicate(predicate)
+        if isinstance(value_array, (list, tuple)):
+            compact_json[key] = []
+            for value_struct in value_array:
+                compact_json[key].append(self.compact_json_value(value_struct, document, stack, deferred))
+        else:
+            compact_json[key] = self.compact_json_value(value_array, document, stack, deferred)
+    
+    def fill_in_stub(self, compact_json, document, stack, deferred):
+        subject = compact_json['_subject']
+        document_subject = document[subject]
+        if LDP+'contains' in document_subject:
+            self.add_compact_property(compact_json, LDP+'contains', document_subject[LDP+'contains'], document, stack, deferred)
+        for predicate, value_array in document[subject].iteritems():
+            if predicate != LDP+'contains':
+                self.add_compact_property(compact_json, predicate, value_array, document, stack, deferred)
 
     def convert_to_compact_json(self, document):
-        compact_json = self.compact_json_object(document.default_subject(), document, [])
-        return compact_json
+        stack = set()
+        deferred = []
+        result = self.compact_json_stub(document.default_subject(), document, stack, deferred)
+        while deferred:
+            object = deferred.pop(0)
+            self.fill_in_stub(object, document, stack, deferred)
+        return result
+
+class Compact_json_to_rdf_json_converter():
+            
+    def __init__(self, namespace_mappings):
+        self.namespace_mappings = namespace_mappings
+        
+    def expand_predicate(self, predicate):
+        for namespace, prefix in self.namespace_mappings.iteritems():
+            if predicate.startswith(prefix + '_'): 
+                return namespace + predicate[len(prefix)+1:]
+        return predicate
+    
+    def get_rdf_jso_from_compact_jso(self, rdf_jso, application_jso):
+        rdf_predicates = {}
+        subject = ''
+        for key, value in application_jso.iteritems():
+            if key == '_subject':
+                subject = value
+            else:
+                predicate = self.expand_predicate(key)
+                if hasattr(value, 'keys'): # value is a value with a type, or a whole nested object
+                    if '_subject' in value: # value is a whole nested object
+                        rdf_predicates[predicate] = URI(value['_subject'])
+                        self.get_rdf_jso_from_compact_jso(rdf_jso, value)
+                    elif 'type' in value and 'value' in value: # value is a value of form {"type": "aType", "value": "aValue"}
+                        if value['type'] == 'uri':
+                            rdf_predicates[predicate] = URI(value['value'])
+                        elif value['type'] == 'literal' and 'datatype' in value and value['datatype'] == 'http://www.w3.org/2001/XMLSchema#dateTime':
+                            rdf_predicates[predicate] = to_datetime(value['value'])
+                        else:
+                            raise ValueError("bad value in application/json")
+                    else:
+                        raise ValueError("bad value in application/json")
+                elif isinstance(value, basestring):
+                    if value.startswith('http:') or value.startswith('https:'):
+                        rdf_predicates[predicate] = URI(value)
+                    elif value.startswith('mailto:'): #TODO: do we really want to do this? What about other schemes?
+                        rdf_predicates[predicate] = URI(value)
+                    #TODO: do we also want:  elif <value is a "date" format>: rdf_predicates[predicate] = to_datetime(value)
+                    else:
+                        rdf_predicates[predicate] = value
+                else:
+                    rdf_predicates[predicate] = value
+        if subject in rdf_jso:
+            rdf_jso[subject].update(rdf_predicates) #TODO: need to find and then merge array values - update will simply replace
+        else:
+            rdf_jso[subject] = rdf_predicates
+            
+    def convert_to_rdf_json(self, application_jso):
+        rdf_jso = {}
+        self.get_rdf_jso_from_compact_jso(rdf_jso, application_jso)
+        return rdf_jso
