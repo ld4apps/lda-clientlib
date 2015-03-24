@@ -420,9 +420,9 @@ rdf_util = (function () {
                 }
             }
                     
-        function get_rdf_jso_from_div(graph_div) {
-            var result = new Rdf_Jso(graph_div.getAttribute('graph')) // caller may need to adjust to add back hash from url
-            var sub_elements = graph_div.children
+        function get_rdf_jso_from_body(document) {
+            var result = new Rdf_Jso(window.location.href)
+            var sub_elements = document.body.children
             for (var i=0; i<sub_elements.length; i++) { // iterate per subject
                 var subgraph_div = sub_elements[i]
                 if (subgraph_div.hasAttribute('resource')) {
@@ -444,21 +444,11 @@ rdf_util = (function () {
             return result
             }
 
-        var graph_elements = document.body.children
-        for (var i=0; i<graph_elements.length; i++) { // iterate per subject
-            var graph_element = graph_elements[i]
-            if (graph_element.nodeName=='DIV' && graph_element.hasAttribute('graph')) {
-                var result = get_rdf_jso_from_div(graph_element)
-                var hash_index = window.location.href.indexOf('#') // window.location.hash gives wrong answer if nothing after #
-                if (hash_index >= 0) {
-                    var real_subject = result.graph_url + window.location.href.slice(hash_index)
-                    result.default_subject_url =  real_subject
-                    result.default_object_url =  real_subject
-                    }
-                return result
-                }
-            }
-        return null
+        var result = get_rdf_jso_from_body(document)
+        var real_subject = window.location.href
+        result.default_subject_url =  real_subject
+        result.default_object_url =  real_subject
+        return result
         }
 
     Rdf_converter.prototype.convert_to_simple_jso = function(rdf_jso) {
