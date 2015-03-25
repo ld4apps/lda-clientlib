@@ -544,20 +544,23 @@ class Compact_json_to_rdf_json_converter():
                     else:
                         raise ValueError("bad value in application/json")
                 elif isinstance(value, basestring):
-                    if value.startswith('http:') or value.startswith('https:'):
-                        rdf_predicates[predicate] = URI(value)
-                    elif value.startswith('mailto:'): #TODO: do we really want to do this? What about other schemes?
-                        rdf_predicates[predicate] = URI(value)
-                    #TODO: do we also want:  elif <value is a "date" format>: rdf_predicates[predicate] = to_datetime(value)
-                    else:
-                        rdf_predicates[predicate] = value
+                    rdf_predicates[predicate] = self.get_value_from_string(predicate, value)
                 else:
                     rdf_predicates[predicate] = value
         if subject in rdf_jso:
             rdf_jso[subject].update(rdf_predicates) #TODO: need to find and then merge array values - update will simply replace
         else:
             rdf_jso[subject] = rdf_predicates
-            
+
+    def get_value_from_string(self, predicate, value):
+        if value.startswith('http:') or value.startswith('https:'):
+            return URI(value)
+        elif value.startswith('mailto:'): #TODO: do we really want to do this? What about other schemes?
+            return URI(value)
+        #TODO: do we also want:  elif <value is a "date" format>: rdf_predicates[predicate] = to_datetime(value)
+        #TODO: anything else?
+        return value
+        
     def convert_to_rdf_json(self, application_jso):
         rdf_jso = {}
         self.get_rdf_jso_from_compact_jso(rdf_jso, application_jso)

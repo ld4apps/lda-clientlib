@@ -11,16 +11,18 @@ VCARD = 'http://www.w3.org/2006/vcard/ns#'
 FOAF = 'http://xmlns.com/foaf/0.1/'
 TRS = 'http://jazz.net/ns/trs#'
 AC = 'http://ibm.com/ce/ac/ns#'
+ENV = 'http://ibm.com/ce/env/ns#'
 
 NAMESPACE_MAPPINGS = {
-    RDFS : 'rdfs',
-    RDF  : 'rdf', 
-    LDP :  'ldp',
-    XSD :  'xsd',
-    DC :   'dc',
-    CE :   'ce',
-    OWL :  'owl',
-    AC :   'ac' # TODO: consider changing ac:resource-group to ce:resource-group, and then remove this line
+    RDFS: 'rdfs',
+    RDF:  'rdf', 
+    LDP:  'ldp',
+    XSD:  'xsd',
+    DC:   'dc',
+    CE:   'ce',
+    OWL:  'owl',
+    AC:   'ac', # TODO: consider changing ac:resource-group to ce:resource-group, and then remove this line
+    ENV:  'env'
     }
 
 AC_T = 0x01 # Transform
