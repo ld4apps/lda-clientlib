@@ -126,6 +126,24 @@ class PathRootTenantURLPolicy():
                     extra_path_segments = path_parts[4:]
         return path_parts, namespace, document_id, extra_path_segments
     
+# This class implements a URL Policy where the document id can be 2 path components (e.g., http://cloudsupplements.cloudapps4.me/cat/products/1.2)
+# To configure this implementation in base_constants.py
+#    export URL_POLICY_CLASS=url_policy#TypeQualifiedHostnameTenantURLPolicy
+class TypeQualifiedHostnameTenantURLPolicy(HostnameTenantURLPolicy):
+    def parse_path(self, path):
+        path_parts = path.split('/')
+        namespace = document_id = extra_path_segments = None
+        if len(path_parts) > 1 and path_parts[-1] != '': #trailing /
+            namespace = path_parts[1]
+            if len(path_parts) > 2:
+                document_id = urllib.quote(path_parts[2], '%') # TODO: Fix this doesn't seem to be encoding international characters the same way that the browser does.
+                if len(path_parts) > 3:
+                    document_id = document_id + '/' + path_parts[3]
+                    if len(path_parts) > 4:
+                        extra_path_segments = path_parts[4:]  
+        return path_parts, namespace, document_id, extra_path_segments
+
+"""
 if __name__ == '__main__':
     # run a few tests
     url_policy = HostnameTenantURLPolicy()
@@ -169,3 +187,31 @@ if __name__ == '__main__':
     tenant, namespace, document_id, extra_path_segments, path, path_parts, hostname, query_string = \
         url_policy.get_url_components({'PATH_INFO': '/cloudsupplements', 'HTTP_HOST': 'cloudapps4.me', 'QUERY_STRING': None})
     print url_policy.construct_url(hostname, tenant, namespace, document_id)
+
+    url_policy = TypeQualifiedHostnameTenantURLPolicy()
+    print '### TypeQualifiedHostnameTenantURLPolicy'
+    print url_policy.construct_url('cloudsupplements.cloudapps4.me', 'cloudsupplements', 'cat', 'products/1.2')
+    print url_policy.construct_url('cloudsupplements.cloudapps4.me', 'cloudsupplements', 'cat', 'products')
+    print url_policy.construct_url('cloudsupplements.cloudapps4.me', 'cloudsupplements', 'cat')
+    print url_policy.construct_url('cloudsupplements.cloudapps4.me', 'cloudsupplements')    
+    print url_policy.construct_url(None, None, 'cat', 'products/1.2')
+    print url_policy.construct_url(None, None, 'cat', 'products')
+    print url_policy.construct_url(None, None, 'cat')
+    print url_policy.construct_url(None, None)    
+
+    tenant, namespace, document_id, extra_path_segments, path, path_parts, hostname, query_string = \
+        url_policy.get_url_components({'PATH_INFO': '/cat/products/1.2', 'HTTP_HOST': 'cloudsupplements.cloudapps4.me', 'QUERY_STRING': None})
+    print url_policy.construct_url(hostname, tenant, namespace, document_id)
+    
+    tenant, namespace, document_id, extra_path_segments, path, path_parts, hostname, query_string = \
+        url_policy.get_url_components({'PATH_INFO': '/cat/products', 'HTTP_HOST': 'cloudsupplements.cloudapps4.me', 'QUERY_STRING': None})
+    print url_policy.construct_url(hostname, tenant, namespace, document_id)
+    
+    tenant, namespace, document_id, extra_path_segments, path, path_parts, hostname, query_string = \
+        url_policy.get_url_components({'PATH_INFO': '/cat', 'HTTP_HOST': 'cloudsupplements.cloudapps4.me', 'QUERY_STRING': None})
+    print url_policy.construct_url(hostname, tenant, namespace, document_id)
+
+    tenant, namespace, document_id, extra_path_segments, path, path_parts, hostname, query_string = \
+        url_policy.get_url_components({'PATH_INFO': '/', 'HTTP_HOST': 'cloudsupplements.cloudapps4.me', 'QUERY_STRING': None})
+    print url_policy.construct_url(hostname, tenant, namespace, document_id)
+"""

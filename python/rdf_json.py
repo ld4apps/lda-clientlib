@@ -545,6 +545,8 @@ class Compact_json_to_rdf_json_converter():
                         raise ValueError("bad value in application/json")
                 elif isinstance(value, basestring):
                     rdf_predicates[predicate] = self.get_value_from_string(predicate, value)
+                elif isinstance(value, (list, tuple)):
+                    rdf_predicates[predicate] = [(self.get_value_from_string(predicate, item) if isinstance(item, basestring) else item) for item in value]
                 else:
                     rdf_predicates[predicate] = value
         if subject in rdf_jso:
