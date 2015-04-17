@@ -516,11 +516,42 @@ class Compact_json_to_rdf_json_converter():
     def __init__(self, namespace_mappings):
         self.namespace_mappings = namespace_mappings
         
+    def get_value_from_string(self, predicate, value):
+        if value.startswith('http:') or value.startswith('https:'):
+            return URI(value)
+        elif value.startswith('mailto:'): #TODO: do we really want to do this? What about other schemes?
+            return URI(value)
+        #TODO: do we also want:  elif <value is a "date" format>: return to_datetime(value)
+        #TODO: anything else?
+        return value
+        
     def expand_predicate(self, predicate):
         for namespace, prefix in self.namespace_mappings.iteritems():
             if predicate.startswith(prefix + '_'): 
                 return namespace + predicate[len(prefix)+1:]
         return predicate
+    
+    def convert_value(self, value, predicate, rdf_jso):
+        if hasattr(value, 'keys'): # value is a value with a type, or a whole nested object
+            if '_subject' in value: # value is a whole nested object
+                converted_value = URI(value['_subject'])
+                self.get_rdf_jso_from_compact_jso(rdf_jso, value)
+            elif 'type' in value and 'value' in value: # value is a value of form {"type": "aType", "value": "aValue"}
+                if value['type'] == 'uri':
+                    converted_value = URI(value['value'])
+                elif value['type'] == 'literal' and 'datatype' in value and value['datatype'] == 'http://www.w3.org/2001/XMLSchema#dateTime':
+                    converted_value = to_datetime(value['value'])
+                else:
+                    raise ValueError("bad value in application/json")
+            else:
+                raise ValueError("bad value in application/json")
+        elif isinstance(value, basestring):
+            converted_value = self.get_value_from_string(predicate, value)
+        elif isinstance(value, (list, tuple)):
+            converted_value = [self.convert_value(item, predicate, rdf_jso) for item in value]
+        else:
+            converted_value = value
+        return converted_value
     
     def get_rdf_jso_from_compact_jso(self, rdf_jso, application_jso):
         rdf_predicates = {}
@@ -530,39 +561,12 @@ class Compact_json_to_rdf_json_converter():
                 subject = value
             else:
                 predicate = self.expand_predicate(key)
-                if hasattr(value, 'keys'): # value is a value with a type, or a whole nested object
-                    if '_subject' in value: # value is a whole nested object
-                        rdf_predicates[predicate] = URI(value['_subject'])
-                        self.get_rdf_jso_from_compact_jso(rdf_jso, value)
-                    elif 'type' in value and 'value' in value: # value is a value of form {"type": "aType", "value": "aValue"}
-                        if value['type'] == 'uri':
-                            rdf_predicates[predicate] = URI(value['value'])
-                        elif value['type'] == 'literal' and 'datatype' in value and value['datatype'] == 'http://www.w3.org/2001/XMLSchema#dateTime':
-                            rdf_predicates[predicate] = to_datetime(value['value'])
-                        else:
-                            raise ValueError("bad value in application/json")
-                    else:
-                        raise ValueError("bad value in application/json")
-                elif isinstance(value, basestring):
-                    rdf_predicates[predicate] = self.get_value_from_string(predicate, value)
-                elif isinstance(value, (list, tuple)):
-                    rdf_predicates[predicate] = [(self.get_value_from_string(predicate, item) if isinstance(item, basestring) else item) for item in value]
-                else:
-                    rdf_predicates[predicate] = value
+                rdf_predicates[predicate] = self.convert_value(value, predicate, rdf_jso)
         if subject in rdf_jso:
             rdf_jso[subject].update(rdf_predicates) #TODO: need to find and then merge array values - update will simply replace
         else:
             rdf_jso[subject] = rdf_predicates
 
-    def get_value_from_string(self, predicate, value):
-        if value.startswith('http:') or value.startswith('https:'):
-            return URI(value)
-        elif value.startswith('mailto:'): #TODO: do we really want to do this? What about other schemes?
-            return URI(value)
-        #TODO: do we also want:  elif <value is a "date" format>: rdf_predicates[predicate] = to_datetime(value)
-        #TODO: anything else?
-        return value
-        
     def convert_to_rdf_json(self, application_jso):
         rdf_jso = {}
         self.get_rdf_jso_from_compact_jso(rdf_jso, application_jso)
