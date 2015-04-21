@@ -471,6 +471,12 @@ class RDF_json_to_compact_json_converter():
                 return self.compact_json_stub(url_string, document, stack, deferred)
             else:
                 return url_string
+        elif isinstance(value_struct, BNode):
+            bnode_string = str(value_struct)
+            compact_json = {}
+            for predicate, value_array in document[bnode_string].iteritems():
+                self.add_compact_property(compact_json, predicate, value_array, document, stack, deferred)
+            return compact_json
         elif hasattr(value_struct, 'bnoode_string') and value_struct.bnode_string in document and value_struct.bnode_string not in stack:
             return self.compact_json_stub(value_struct.bnode_string, document, stack, deferred)
         elif isinstance(value_struct, datetime.datetime):
@@ -515,7 +521,12 @@ class Compact_json_to_rdf_json_converter():
             
     def __init__(self, namespace_mappings):
         self.namespace_mappings = namespace_mappings
-        
+        self.bnode_count = 0
+
+    def get_bnode(self):
+        self.bnode_count += 1
+        return BNode("_:b%s" % self.bnode_count)
+             
     def get_value_from_string(self, predicate, value):
         if value.startswith('http:') or value.startswith('https:'):
             return URI(value)
@@ -544,7 +555,11 @@ class Compact_json_to_rdf_json_converter():
                 else:
                     raise ValueError("bad value in application/json")
             else:
-                raise ValueError("bad value in application/json")
+                # value is a blank node nested object
+                converted_value = self.get_bnode()
+                value = dict(value) # make a copy
+                value['_subject'] = str(converted_value)
+                self.get_rdf_jso_from_compact_jso(rdf_jso, value)
         elif isinstance(value, basestring):
             converted_value = self.get_value_from_string(predicate, value)
         elif isinstance(value, (list, tuple)):
