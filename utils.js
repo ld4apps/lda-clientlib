@@ -1091,7 +1091,7 @@ misc_util = (function () {
     function History_Tracker(resource_url, already_in_history, original_document_url) {
         this.resource_url = resource_url
         this.already_in_history = already_in_history
-        this.original_document_url =original_document_url
+        this.original_document_url = original_document_url
         }
     History_Tracker.prototype.accept_url = function() {
         if (!this.already_in_history) { // if it's a history event, there is already a history entry, so don't make another
@@ -1101,10 +1101,14 @@ misc_util = (function () {
                    FireFox will load that page instead of sending a history event to the current page. */
                 history.pushState(null, null, this.resource_url)
                 }
-            else { // The Firefox behaviour is what we want on all browsers, but we have to work harder to get it on the other ones.*/
-                history.pushState({original_document_url:this.original_document_url}, null, this.resource_url) 
+            else { // The Firefox behaviour is what we want on all browsers, but we have to work harder to get it on the other ones.
+                history.pushState({original_document_url:document.location.href}, null, this.resource_url) 
                 }
             }
+        //In order to maintain the state of the last page loaded as a history object, after the most recent page load a history state must be initialized. 
+        //This is done in order to check history event consistency by comparing URLs in the onpopstate function. Each page, including the most recently loaded one 
+        //(ie. the one where the forward button is grey) will have a histor event with its URL to be checked if we navigate back and forth with back/forward.
+        history.replaceState({original_document_url:document.location.href}, null)
         }
      History_Tracker.prototype.decline_url = function() {           
         if (!this.already_in_history) { // it's OK not to handle if it's not a history event (i.e. it's a new click). We just need to load the right app for it
@@ -1136,8 +1140,13 @@ misc_util = (function () {
             if (element.nodeName == "A") {
                 if (self.claims_element_click(element, event)) { // so far it looks like it might be something we handle, but we won't know for sure until we load it
                     event.preventDefault()
+                    self.original_document_url = window.location.href
                     var history_tracker = new History_Tracker(element.href, false)
+                    var updated_state = history.state || {}
+                    updated_state.original_document_url = self.original_document_url
+                    
                     self.get_resource_and_show_view(element.href, history_tracker)
+                    history.replaceState(updated_state, null)
                     }
                 }
             }
@@ -1145,7 +1154,7 @@ misc_util = (function () {
             var history_tracker = new History_Tracker(window.location.href, true)
             if (navigator.userAgent.indexOf('Firefox') < 0) {
                 /* If it's not Firefox, the event may not be for this page. Previously we made sure that the state for the event would include a URL we can use to check.*/
-                if (event.state && event.state.original_document_url == self.original_document_url) { // it really is for us
+                if (event.state && event.state.original_document_url == window.location.href){
                     self.get_resource_and_show_view(window.location.href, history_tracker)
                     }
                 else { // Event for a different page. Firefox would have loaded the page for us instead of sending us the event. Chrome and IE work the other way.
